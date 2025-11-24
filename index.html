@@ -197,6 +197,43 @@
     .severity-dot.minor { background-color: #EAB308; }
     .severity-dot.info { background-color: #3B82F6; }
     .severity-dot.success { background-color: #22c55e; }
+    
+    /* marquee for widget */
+    .marquee {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      /* optional: align vertically */
+      display: block;
+    }
+
+    .marquee__inner {
+      display: inline-flex;
+      white-space: nowrap;
+      align-items: center;
+      will-change: transform;
+      /* animation will be set inline from JS to allow dynamic duration and translate distance */
+      /* fallback: no animation by default */
+    }
+
+    /* marquee - keyframes use CSS var for translate distance (px) */
+    @keyframes marquee-slide {
+      from { transform: translateX(0); }
+      to   { transform: translateX(calc(var(--marquee-translate, 0px) * -1)); }
+    }
+
+    /* marquee - pause on hover or focus (nice UX) */
+    .marquee:hover .marquee__inner,
+    .marquee:focus-within .marquee__inner {
+      animation-play-state: paused;
+    }
+
+    /* marquee - respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .marquee__inner {
+        animation: none !important;
+      }
+    }
   </style>
 </head>
 <body class="text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden transition-colors duration-500 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-[#0B1121]">
@@ -957,7 +994,7 @@
         textSpans.forEach(s => s.style.display = 'none');
       }
     }
-
+    /* renderWidgets legacy code - gemini
     function renderWidgets() {
       const counts = {};
       state.rooms.forEach(r => r.rows.forEach(row => {
@@ -975,8 +1012,8 @@
         const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
         const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
         return `
-          <div class="flex items-center gap-3 pl-2 pr-3 h-12 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+          <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
+            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
               <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
             </div>
             <div class="flex-1 overflow-hidden min-w-0">
@@ -988,6 +1025,97 @@
       }).join('');
       document.querySelectorAll('.marquee-check').forEach(el => {
         if (el.scrollWidth > el.parentElement.clientWidth) el.classList.add('animate-marquee', 'pl-[100%]');
+      });
+    }*/
+    function renderWidgets() {
+      const counts = {};
+      state.rooms.forEach(r => r.rows.forEach(row => {
+        if(!row.device) return;
+        counts[row.device] = (counts[row.device] || 0) + (row.qty || 1);
+      }));
+      const keys = Object.keys(counts);
+      const container = document.getElementById('widgets-area');
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="text-slate-400 text-sm py-4 col-span-full">기기가 없습니다.</div>`;
+        return;
+      }
+
+      container.innerHTML = keys.map(key => {
+        const filename = DEVICE_ICON_MAP[key] || 'other';
+        const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
+        const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
+
+        // NOTE: marquee structure: .marquee > .marquee__inner > [span text][span text duplicate]
+        return `
+          <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
+            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+              <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
+            </div>
+
+            <div class="flex-1 overflow-hidden min-w-0">
+              <div class="marquee">
+                <div class="marquee__inner">
+                  <span class="marquee-text inline-block text-base font-medium text-slate-700 dark:text-slate-200">${escapeHtml(key)}</span>
+                  <span class="marquee-text inline-block text-base font-medium text-slate-700 dark:text-slate-200" aria-hidden="true">${escapeHtml(key)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="font-bold text-brand-dark dark:text-brand-light text-base pr-2 shrink-0">${counts[key]}</div>
+          </div>
+        `;
+      }).join('');
+
+      // After DOM is inserted, initialize marquee animations
+      document.querySelectorAll('.marquee').forEach(marquee => {
+        const inner = marquee.querySelector('.marquee__inner');
+        if (!inner) return;
+
+        // pick the first text span (original)
+        const first = inner.querySelector('.marquee-text');
+        if (!first) return;
+
+        // ensure layout is calculated
+        const containerWidth = marquee.clientWidth;
+        const contentWidth = first.offsetWidth; // width of single text
+        const gapPx = 20; // spacing between duplicated texts (tuneable)
+        // If content fits, do nothing (no animation)
+        if (contentWidth <= containerWidth) {
+          // ensure only the first copy is visible and remove duplicate to avoid accessibility duplication
+          const duplicate = inner.querySelectorAll('.marquee-text')[1];
+          if (duplicate) duplicate.style.display = 'none';
+          inner.style.transform = 'none';
+          inner.style.animation = 'none';
+          return;
+        }
+
+        // Show duplicate (we already added duplicate in HTML)
+        // Set CSS variable for translate distance (we want to scroll one copy width + gap)
+        const translateDistance = contentWidth + gapPx;
+        inner.style.setProperty('--marquee-translate', `${translateDistance}px`);
+
+        // compute duration based on a pixels-per-second speed (tweak as needed)
+        const pxPerSecond = 20; // 60px/s — 원하는 속도로 변경
+        const durationSeconds = (translateDistance) / pxPerSecond;
+
+        // set animation using the keyframes; use linear infinite loop
+        inner.style.animation = `marquee-slide ${durationSeconds}s linear infinite`;
+        // set a small gap between repeats by applying margin-right on first copy
+        first.style.marginRight = `${gapPx}px`;
+      });
+    }
+
+    // helper: basic HTML escape to avoid injection when rendering device keys
+    function escapeHtml (unsafe) {
+      return unsafe.replace(/[&<"'>]/g, function(m) {
+        switch (m) {
+          case '&': return '&amp;';
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '"': return '&quot;';
+          case "'": return '&#039;';
+          default: return m;
+        }
       });
     }
 
@@ -1198,7 +1326,7 @@
 
       const rect = input.getBoundingClientRect();
       root.innerHTML = `
-        <div class="fixed bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl z-[9999] max-h-60 overflow-auto flex flex-col"
+        <div class="absolute bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-xl rounded-xl z-[9999] max-h-60 overflow-auto flex flex-col"
              style="top: ${rect.bottom + window.scrollY + 4}px; left: ${rect.left + window.scrollX}px; width: ${Math.max(rect.width, 220)}px;">
            ${filtered.map(item => {
               const regex = new RegExp(`(${val})`, 'gi');
@@ -1459,7 +1587,7 @@
       for(let i=0; i<200; i++) {
         const t = document.createElement('div');
         t.textContent = 'Shopping Things';
-        Object.assign(t.style, { opacity: '0.0001', fontSize: '36px', transform: 'rotate(-12deg)', margin: '8px', fontFamily: 'sans-serif', fontWeight: 'bold' });
+        Object.assign(t.style, { opacity: '0.01', fontSize: '36px', transform: 'rotate(-12deg)', margin: '8px', fontFamily: 'SamsungSharpSans', fontWeight: 'bold' });
         tile.appendChild(t);
       }
       document.body.appendChild(tile);
