@@ -23,6 +23,7 @@
           fontFamily: {
             sans: ['"Noto Sans KR"', 'sans-serif'],
             display: ['"Noto Sans KR"', 'sans-serif'],
+            logo: ['SamsungSharpSans', 'sans-serif'],
           },
           keyframes: {
             marquee: {
@@ -58,6 +59,15 @@
 
   <!-- Custom Styles -->
   <style>
+    /* Custom Fonts */
+    @font-face {
+      font-family: 'SamsungSharpSans';
+      src: url('SamsungSharpSans-Bold.TTF');
+      font-weight: bold;
+      font-style: normal;
+      font-display: swap;
+    }
+
     /* Hide scrollbars */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -200,7 +210,7 @@
         <div class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm overflow-hidden">
           <img src="images/icons/general/logo_shoppingthings_512h.png" alt="ShoppingThings" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentElement.innerText='ST'">
         </div>
-        <h1 class="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">ShoppingThings</h1>
+        <h1 class="font-logo font-bold text-xl tracking-tight text-slate-900 dark:text-white pt-0.5">ShoppingThings</h1>
       </div>
 
       <!-- PC Tabs -->
