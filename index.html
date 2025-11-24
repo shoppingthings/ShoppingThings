@@ -7,7 +7,7 @@
   
   <!-- Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   
   <!-- Tailwind Config -->
@@ -498,9 +498,6 @@
         let mismatchImpact = 0;
         devices.forEach(d => {
            // Simple check: if protocol is set but not standard for that device type (very loose check for now)
-           // Logic omitted for simplicity as per prompt focus on new rules structure, 
-           // or implement basic check if needed. Let's assume user input matches for now or implement basic:
-           // (Not fully implementing loose string matching for 'mismatch' to avoid false positives in this demo)
         });
 
         // N09: ISOLATED_DEVICES (-12)
@@ -537,7 +534,6 @@
         rooms.forEach((r, i) => {
            if(r.rows.some(d => CAPABILITY_MAP[d.device]?.some(c => c.startsWith('hub')))) hubRooms.add(i);
         });
-        // If hub exists in a room with devices of same proto -> bonus. (Simplified: just presence of hub in room)
         if(hubRooms.size > 0) reasons.push({ code: 'HUB_IN_SAME_ROOM', severity: 'minor', impact: 6, message: '허브가 기기와 같은 공간에 배치됨', related: [] });
 
         // P03: MULTI_HUB_NETWORK (+10)
@@ -994,39 +990,7 @@
         textSpans.forEach(s => s.style.display = 'none');
       }
     }
-    /* renderWidgets legacy code - gemini
-    function renderWidgets() {
-      const counts = {};
-      state.rooms.forEach(r => r.rows.forEach(row => {
-        if(!row.device) return;
-        counts[row.device] = (counts[row.device] || 0) + (row.qty || 1);
-      }));
-      const keys = Object.keys(counts);
-      const container = document.getElementById('widgets-area');
-      if (keys.length === 0) {
-        container.innerHTML = `<div class="text-slate-400 text-sm py-4 col-span-full">기기가 없습니다.</div>`;
-        return;
-      }
-      container.innerHTML = keys.map(key => {
-        const filename = DEVICE_ICON_MAP[key] || 'other';
-        const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
-        const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
-        return `
-          <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
-              <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
-            </div>
-            <div class="flex-1 overflow-hidden min-w-0">
-               <div class="whitespace-nowrap text-sm font-medium text-slate-700 dark:text-slate-200 marquee-check">${key}</div>
-            </div>
-            <div class="font-bold text-brand-dark dark:text-brand-light text-sm pr-2 shrink-0">${counts[key]}</div>
-          </div>
-        `;
-      }).join('');
-      document.querySelectorAll('.marquee-check').forEach(el => {
-        if (el.scrollWidth > el.parentElement.clientWidth) el.classList.add('animate-marquee', 'pl-[100%]');
-      });
-    }*/
+    
     function renderWidgets() {
       const counts = {};
       state.rooms.forEach(r => r.rows.forEach(row => {
@@ -1579,9 +1543,9 @@
     }
 
     const exportToPNG = async () => {
-      if (!window.html2canvas) return alert('Library not loaded');
+      if (!window.htmlToImage) return alert('Library not loaded');
       const noPrints = document.querySelectorAll('.no-print-target');
-      noPrints.forEach(el => el.classList.add('no-print'));
+      
       const tile = document.createElement('div');
       Object.assign(tile.style, { position: 'absolute', left: '0', top: '0', width: document.documentElement.scrollWidth+'px', height: document.documentElement.scrollHeight+'px', pointerEvents: 'none', zIndex: '99999', display: 'flex', flexWrap: 'wrap', overflow: 'hidden' });
       for(let i=0; i<200; i++) {
@@ -1609,16 +1573,21 @@
         el.style.visibility = 'hidden';
       });
       try {
-        const canvas = await html2canvas(document.documentElement, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true, ignoreElements: (el) => el.classList.contains('no-print') });
+        const dataUrl = await htmlToImage.toPng(document.documentElement, { 
+          pixelRatio: 2, 
+          backgroundColor: state.theme === 'dark' ? '#0f172a' : '#f8fafc',
+          filter: (node) => {
+             return !node.classList?.contains('no-print-target') && !node.classList?.contains('no-print');
+          }
+        });
         const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
+        link.href = dataUrl;
         link.download = 'shoppingthings.png';
         link.click();
       } catch(e) { console.error(e); alert('Export failed'); }
       finally {
         overlays.forEach(o => { o.el.style.visibility = ''; o.span.remove(); });
         tile.remove();
-        noPrints.forEach(el => el.classList.remove('no-print'));
       }
     };
 
