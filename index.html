@@ -203,7 +203,6 @@
       position: relative;
       overflow: hidden;
       width: 100%;
-      /* optional: align vertically */
       display: block;
     }
 
@@ -212,27 +211,31 @@
       white-space: nowrap;
       align-items: center;
       will-change: transform;
-      /* animation will be set inline from JS to allow dynamic duration and translate distance */
-      /* fallback: no animation by default */
     }
 
-    /* marquee - keyframes use CSS var for translate distance (px) */
     @keyframes marquee-slide {
       from { transform: translateX(0); }
       to   { transform: translateX(calc(var(--marquee-translate, 0px) * -1)); }
     }
 
-    /* marquee - pause on hover or focus (nice UX) */
     .marquee:hover .marquee__inner,
     .marquee:focus-within .marquee__inner {
       animation-play-state: paused;
     }
 
-    /* marquee - respect reduced motion */
     @media (prefers-reduced-motion: reduce) {
       .marquee__inner {
         animation: none !important;
       }
+    }
+
+    /* Slider Styles */
+    .slider-container {
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .slider-slide {
+      scroll-snap-align: center;
     }
   </style>
 </head>
@@ -258,6 +261,7 @@
       <!-- Actions -->
       <div class="flex items-center gap-2 shrink-0">
         <button id="btn-export-pc" class="hidden md:flex btn-primary bg-gradient-to-r from-brand-light to-brand text-white px-4 py-2 rounded-full text-sm font-bold items-center gap-2 shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-95">PNG 저장</button>
+        <button id="btn-header-tuto" class="hidden btn-primary bg-gradient-to-r from-brand-light to-brand text-white px-4 py-2 rounded-full text-sm font-bold items-center gap-2 shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-95">튜토리얼</button>
         <div class="flex items-center">
           <button id="btn-gnb-notif" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors relative" aria-label="알림" aria-pressed="false">
              <span class="nudge-dot"></span>
@@ -270,7 +274,7 @@
     </div>
 
     <!-- Row 2: Mobile Tabs -->
-    <div class="md:hidden border-t border-slate-100 dark:border-slate-800 px-2 py-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+    <div class="md:hidden border-t border-slate-100 dark:border-slate-800 px-2 py-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm" id="mobile-tabs-wrapper">
       <div id="mobile-tabs-container" class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full cursor-grab active:cursor-grabbing select-none"></div>
     </div>
   </header>
@@ -281,7 +285,7 @@
     <aside id="sidebar" class="fixed top-24 bottom-4 bg-transparent transition-all duration-300 z-30 hidden md:flex flex-col gap-2 no-print-target w-48">
       <nav class="flex flex-col gap-1 w-full">
         <button id="nav-device" class="flex items-center gap-3 rounded-xl border shadow-sm transition-all text-left px-4 py-3 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 text-brand border-slate-100 dark:border-slate-700 font-bold">
-          <span>기기 목록</span>
+          <span>기기</span>
         </button>
         <button id="nav-help" class="flex items-center gap-3 rounded-xl border border-transparent transition-all text-left px-4 py-3 hover:bg-white/50 dark:hover:bg-slate-800/50 text-slate-500 dark:text-slate-400 hover:border-slate-100 dark:hover:border-slate-700 font-bold">
           <span>도움말</span>
@@ -291,47 +295,153 @@
 
     <!-- Main Content -->
     <main id="main-content" class="flex-1 transition-all duration-300 min-w-0 md:ml-52">
-      <!-- Progressive Automation Score Widget (Scrollable) -->
-      <div id="pas-wrapper" class="w-full mb-8 cursor-pointer select-none group" title="클릭하여 상세 분석 보기">
-        <div class="flex items-end justify-between mb-2 px-1">
-          <div class="flex flex-col">
-            <div class="flex items-baseline gap-2">
-              <span class="text-sm font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Automation Score</span>
+      
+      <!-- View: Checklist -->
+      <div id="view-checklist" class="w-full transition-opacity duration-300">
+        <!-- Progressive Automation Score Widget -->
+        <div id="pas-wrapper" class="w-full mb-8 cursor-pointer select-none group" title="클릭하여 상세 분석 보기">
+          <div class="flex items-end justify-between mb-2 px-1">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Automation Score</span>
+              </div>
+              <div class="flex items-baseline gap-1 mt-1">
+                <span id="pas-val" class="text-4xl font-black text-slate-800 dark:text-white leading-none tracking-tight">0</span>
+                <span class="text-lg font-bold text-slate-400">/ 100</span>
+              </div>
             </div>
-            <div class="flex items-baseline gap-1 mt-1">
-              <span id="pas-val" class="text-4xl font-black text-slate-800 dark:text-white leading-none tracking-tight">0</span>
-              <span class="text-lg font-bold text-slate-400">/ 100</span>
+            <div class="flex flex-col items-end">
+               <div id="pas-status-text" class="text-3xl font-black text-slate-300 dark:text-slate-600 mb-1">분석 중</div>
+               <div id="pas-desc" class="text-xs font-bold text-slate-400 text-right">잠시만 기다려주세요</div>
             </div>
           </div>
-          <div class="flex flex-col items-end">
-             <div id="pas-status-text" class="text-3xl font-black text-slate-300 dark:text-slate-600 mb-1">분석 중</div>
-             <div id="pas-desc" class="text-xs font-bold text-slate-400 text-right">잠시만 기다려주세요</div>
+          
+          <div class="relative w-full h-10 bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-600">
+             <div class="absolute left-[33%] top-0 bottom-0 w-[2px] bg-white dark:bg-slate-800 z-10 opacity-30"></div>
+             <div class="absolute left-[66%] top-0 bottom-0 w-[2px] bg-white dark:bg-slate-800 z-10 opacity-30"></div>
+             <div id="pas-fill" class="h-full bg-brand transition-all duration-1000 ease-out relative w-0 flex items-center justify-end px-3">
+                <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent"></div>
+             </div>
           </div>
         </div>
+
+        <div id="widgets-area" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 w-full mb-6"></div>
+        <div id="rooms-area" class="flex flex-col gap-6"></div>
         
-        <div class="relative w-full h-10 bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-600">
-           <!-- Ticks for levels -->
-           <div class="absolute left-[33%] top-0 bottom-0 w-[2px] bg-white dark:bg-slate-800 z-10 opacity-30"></div>
-           <div class="absolute left-[66%] top-0 bottom-0 w-[2px] bg-white dark:bg-slate-800 z-10 opacity-30"></div>
-           
-           <!-- Fill -->
-           <div id="pas-fill" class="h-full bg-brand transition-all duration-1000 ease-out relative w-0 flex items-center justify-end px-3">
-              <!-- Shine effect -->
-              <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent"></div>
-           </div>
-        </div>
+        <footer class="w-full py-8 pb-28 md:pb-8 text-center text-slate-400 dark:text-slate-600 text-sm font-medium no-print">
+          &copy; 2026 PlusThings
+        </footer>
       </div>
 
-      <div id="widgets-area" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 w-full mb-6"></div>
-      <div id="rooms-area" class="flex flex-col gap-6"></div>
-      
-      <footer class="w-full py-8 pb-28 md:pb-8 text-center text-slate-400 dark:text-slate-600 text-sm font-medium no-print">
-        &copy; 2026 PlusThings
-      </footer>
+      <!-- View: Help (One-Page Structure) -->
+      <div id="view-help" class="hidden w-full pb-24 space-y-12 animate-fadeIn">
+        
+        <!-- 1. Tutorial Hero -->
+        <section class="relative overflow-hidden bg-gradient-to-r from-brand-dark to-brand rounded-[2.5rem] p-8 md:p-14 flex flex-col md:flex-row items-center justify-between shadow-2xl shadow-brand/30 isolate">
+          <div class="absolute -top-32 -right-32 w-80 h-80 bg-white/10 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+          <div class="absolute -bottom-32 -left-32 w-80 h-80 bg-blue-400/20 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+          <div class="absolute right-10 top-10 text-white/5 pointer-events-none">
+            <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+
+          <div class="flex flex-col items-center md:items-start text-center md:text-left z-10 max-w-xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-blue-50 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-sm">
+              <span class="w-2 h-2 rounded-full bg-blue-300 animate-pulse"></span> Start Guide
+            </div>
+            <h2 class="text-3xl md:text-5xl font-black text-white mb-6 leading-tight tracking-tight drop-shadow-sm">
+              ShoppingThings<br/>
+              <span class="opacity-90 font-light">가이드북</span>
+            </h2>
+            <p class="text-blue-50 text-lg mb-10 font-medium leading-relaxed max-w-md">
+              스마트홈이 처음이신가요?<br class="md:hidden"/> 30초 튜토리얼로<br class="hidden md:inline"/> 복잡한 설계를 마스터하세요.
+            </p>
+            <button onclick="TutorialController.open()" class="group px-8 py-3.5 bg-white text-brand-dark rounded-full font-bold text-lg shadow-xl shadow-black/10 hover:shadow-white/20 hover:scale-105 transition-all flex items-center gap-3 active:scale-95">
+               <span>튜토리얼 시작하기</span>
+               <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+          </div>
+          
+          <div class="mt-12 md:mt-0 relative z-10 hidden md:block">
+            <div class="w-56 h-56 bg-gradient-to-tr from-white/20 to-white/5 backdrop-blur-lg rounded-[2rem] border border-white/20 flex items-center justify-center shadow-2xl transform rotate-6 hover:rotate-3 transition-transform duration-500">
+               <div class="text-white drop-shadow-2xl">
+                   <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. App Install (Redesigned) -->
+        <section class="max-w-6xl mx-auto w-full">
+          <div class="mb-8">
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">스마트싱스로 시작하세요</h3>
+            <p class="text-slate-500 dark:text-slate-400 mb-6">다양한 기기에서 스마트싱스를 경험해보세요.</p>
+            
+            <!-- Filter Tabs -->
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2" id="app-filter-tabs">
+               <!-- JS Generated -->
+            </div>
+          </div>
+          
+          <!-- Horizontal Scroll Grid -->
+          <div id="app-store-grid" class="flex gap-4 overflow-x-auto no-scrollbar pb-6 snap-x snap-mandatory">
+            <!-- JS Injected -->
+          </div>
+        </section>
+
+        <!-- 3. Community (Redesigned) -->
+        <section class="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Gallery -->
+            <a href="https://gall.dcinside.com/mgallery/board/lists/?id=smartthings" target="_blank" class="group relative overflow-hidden bg-slate-900 rounded-[2rem] p-8 min-h-[320px] flex flex-col justify-between shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 col-span-1 md:col-span-2">
+                <div class="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-blue-600/30 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute -right-10 -top-10 text-white/5 group-hover:text-white/10 transition-colors transform group-hover:rotate-12 duration-500">
+                     <svg width="240" height="240" viewBox="0 0 24 24" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div class="relative z-10">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold mb-4 backdrop-blur-md">COMMUNITY</div>
+                    <h3 class="text-3xl md:text-4xl font-black text-white mb-3 leading-tight">스마트싱스<br>갤러리</h3>
+                    <p class="text-slate-300 font-medium max-w-sm">대한민국 스마트홈 유저들의<br>생생한 아이디어와 팁을 만나보세요.</p>
+                </div>
+                <div class="relative z-10 flex justify-end">
+                    <span class="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-white group-hover:text-slate-900 transition-colors">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </div>
+            </a>
+
+            <div class="flex flex-col gap-6 col-span-1">
+                 <!-- Notion -->
+                <a href="https://gall.dcinside.com/mgallery/board/view/?id=smartthings&no=407&search_head=10&page=1" target="_blank" class="group relative overflow-hidden bg-[#FFF8F0] dark:bg-orange-950/30 rounded-[2rem] p-8 flex-1 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-orange-100 dark:border-orange-900/50">
+                     <div class="absolute -right-6 -bottom-6 text-orange-500/10 dark:text-orange-500/20 group-hover:scale-110 transition-transform duration-500">
+                         <svg width="140" height="140" viewBox="0 0 24 24" fill="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                     </div>
+                     <div class="relative z-10">
+                         <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">기초 가이드</h3>
+                         <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Matter, Zigbee 개념잡기</p>
+                     </div>
+                </a>
+
+                <!-- CleanThings -->
+                <a href="https://cleanthings.github.io/" target="_blank" class="group relative overflow-hidden bg-blue-50 dark:bg-blue-950/30 rounded-[2rem] p-8 flex-1 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-blue-100 dark:border-blue-900/50">
+                     <div class="absolute -right-6 -bottom-6 text-blue-500/10 dark:text-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+                         <svg width="140" height="140" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                     </div>
+                     <div class="relative z-10">
+                         <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">인증된 제품</h3>
+                         <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">CleanThings 호환성 체크</p>
+                     </div>
+                </a>
+            </div>
+        </section>
+        <footer class="w-full py-8 pb-28 md:pb-8 text-center text-slate-400 dark:text-slate-600 text-sm font-medium no-print">
+          &copy; 2026 PlusThings
+        </footer>
+      </div>
+
     </main>
 
     <!-- Right Indicator -->
-    <div id="indicator-area" class="fixed right-2 xl:right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40 no-print-target pointer-events-none"></div>
+    <div id="indicator-area" class="fixed right-2 xl:right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40 no-print-target pointer-events-none transition-opacity duration-300"></div>
   </div>
 
   <!-- Notification Backdrop -->
@@ -341,10 +451,39 @@
   <div id="notif-stack" class="notif-stack no-print-target">
     <!-- Injected by JS -->
   </div>
+  
+  <!-- Tutorial Modal -->
+  <div id="tutorial-modal" class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+     <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="p-4 flex justify-end">
+           <button onclick="TutorialController.close()" class="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+        
+        <!-- Slides -->
+        <div id="tuto-slider" class="flex-1 overflow-hidden relative">
+           <div id="tuto-track" class="flex transition-transform duration-300 ease-out h-full">
+              <!-- Slides Injected by JS -->
+           </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="p-8 flex items-center justify-between shrink-0">
+           <div id="tuto-dots" class="flex gap-2"></div>
+           <div class="flex gap-3">
+              <button id="tuto-prev" onclick="TutorialController.prev()" class="hidden px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">이전</button>
+              <button id="tuto-next" onclick="TutorialController.next()" class="px-6 py-2 bg-brand text-white font-bold rounded-xl shadow-lg shadow-brand/20">다음</button>
+           </div>
+        </div>
+     </div>
+  </div>
 
   <!-- Mobile FAB -->
   <button id="btn-export-mobile" class="md:hidden fixed right-4 bottom-28 z-50 bg-gradient-to-r from-brand-light to-brand text-white pl-4 pr-6 py-3 rounded-full shadow-2xl shadow-brand/40 flex items-center gap-2 active:scale-95 transition-transform no-print-target">
     <span class="font-bold text-sm">PNG 저장</span>
+  </button>
+  <button id="btn-tuto-mobile" onclick="TutorialController.open()" class="md:hidden hidden fixed right-4 bottom-28 z-50 bg-gradient-to-r from-brand-light to-brand text-white pl-4 pr-6 py-3 rounded-full shadow-2xl shadow-brand/40 flex items-center gap-2 active:scale-95 transition-transform no-print-target">
+    <span class="font-bold text-sm">튜토리얼</span>
   </button>
 
   <!-- Mobile Bottom Nav -->
@@ -424,6 +563,16 @@
     const PROTOCOLS = ['Zigbee', 'Z-Wave', 'Matter over Wi-Fi', 'Matter over Thread', 'Wi-Fi', 'Bluetooth', 'Thread', 'Galaxy Find Network'];
     const AUTOMATIONS = DEFAULT_PRESETS.map(p => p.automation).concat(['영화모드 자동화', '외출 시 자동화', '기상 자동화', '취침 모드']);
 
+    // EXTERNAL LINKS & APPS
+    const APP_LINKS = [
+      { name: 'Galaxy Store', tags: ['phone', 'tab', 'watch'], url: 'https://galaxystore.samsung.com/prepost/000004262296', color: 'bg-pink-500', icon: 'Grid' },
+      { name: 'Play Store', tags: ['phone', 'watch'], url: 'https://play.google.com/store/apps/details?id=com.samsung.android.oneconnect&hl=ko', color: 'bg-green-500', icon: 'Play' },
+      { name: 'App Store', tags: ['phone', 'watch'], url: 'https://apps.apple.com/kr/app/samsung-smartthings/id1222822904', color: 'bg-blue-500', icon: 'Box' },
+      { name: 'Microsoft Store', tags: ['pc'], url: 'https://apps.microsoft.com/detail/9n3zbh5v7hx6?hl=ko-KR&gl=KR', color: 'bg-blue-600', icon: 'Grid' },
+      { name: 'Samsung TV', tags: ['tv'], url: '#', color: 'bg-indigo-900', icon: 'Grid' },
+      { name: 'Pleos', tags: ['car'], url: '#', color: 'bg-slate-700', icon: 'Play' }
+    ];
+
     // --- ICON HELPER ---
     function getIcon(name, size = 20, className = "") {
       const paths = {
@@ -447,7 +596,11 @@
         ArrowLeft: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
         AlertTriangle: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/>',
         Info: '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/>',
-        Bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'
+        Bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+        Play: '<polygon points="5 3 19 12 5 21 5 3"/>',
+        Grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+        ExternalLink: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/>',
+        Share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>'
       };
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}">${paths[name] || ''}</svg>`;
     }
@@ -622,7 +775,6 @@
         
         // P08: ROBUSTNESS_BONUS (+6)
         // Check if same capability exists multiple times in different devices
-        // Simplified: just check raw count of 'sensor' types > 2
         const sensorCount = devices.filter(d => d.caps.some(c=>c.startsWith('sensor'))).length;
         if (sensorCount >= 3) {
              reasons.push({ code: 'ROBUSTNESS_BONUS', severity: 'minor', impact: 6, message: '센서 중복성/신뢰성 확보', related: [] });
@@ -640,11 +792,93 @@
       return { analyze, computeScore };
     })();
 
+    // --- TUTORIAL CONTROLLER ---
+    const TutorialController = (() => {
+      let currentStep = 0;
+      const steps = [
+        { title: "ShoppingThings가 처음인가요? 👋", desc: "어떤 스마트홈을 만들지 고민하지 마세요.<br>하고 싶은 기기만 고르면 추천해드릴게요.", icon: "👋" },
+        { title: "방마다 기기를 선택하세요 🏠", desc: "방을 추가하고 조명, 센서, 가전 등을 골라보세요.<br>그냥 갖고 싶은 것만 체크하면 돼요.", icon: "🛋️" },
+        { title: "자동화 점수 계산 💯", desc: "선택한 기기로 어떤 자동화가 가능한지 분석해줍니다.<br>점수가 높을수록 똑똑한 집이에요!", icon: "⚡" },
+        { title: "결과 저장하기 💾", desc: "완성된 체크리스트는 이미지로 저장할 수 있어요.<br>갤러리에 보관하세요.", icon: "🖼️" },
+        { title: "커뮤니티에 공유하기 🗣️", desc: "스마트싱스 갤러리에 내 계획을 공유하고<br>전문가들의 조언을 받아보세요!", icon: "💬" },
+        { title: "이제 시작해볼까요? 🚀", desc: "ShoppingThings가 당신의 스마트홈 여정을<br>항상 응원할게요!", icon: "🎉", isLast: true }
+      ];
+
+      function render() {
+        const track = document.getElementById('tuto-track');
+        const dots = document.getElementById('tuto-dots');
+        if(!track) return;
+
+        // Build Slides
+        track.innerHTML = steps.map((s, i) => `
+          <div class="w-full shrink-0 flex flex-col items-center justify-center p-8 text-center slider-slide">
+            <div class="text-6xl mb-6 animate-bounce">${s.icon}</div>
+            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-4">${s.title}</h3>
+            <p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-8">${s.desc}</p>
+            ${s.isLast ? `<button onclick="TutorialController.close(); switchView('checklist')" class="px-8 py-3 bg-brand text-white rounded-full font-bold shadow-xl hover:scale-105 transition-transform">시작하기</button>` : ''}
+          </div>
+        `).join('');
+        
+        // Build Dots
+        dots.innerHTML = steps.map((_, i) => `
+          <div class="w-2 h-2 rounded-full transition-all ${i === currentStep ? 'bg-brand w-6' : 'bg-slate-300 dark:bg-slate-700'}"></div>
+        `).join('');
+        
+        updatePos();
+      }
+
+      function updatePos() {
+        const track = document.getElementById('tuto-track');
+        if(track) track.style.transform = `translateX(-${currentStep * 100}%)`;
+        
+        const dots = document.getElementById('tuto-dots');
+        Array.from(dots.children).forEach((d, i) => {
+           d.className = `w-2 h-2 rounded-full transition-all ${i === currentStep ? 'bg-brand w-6' : 'bg-slate-300 dark:bg-slate-700'}`;
+        });
+
+        const prevBtn = document.getElementById('tuto-prev');
+        const nextBtn = document.getElementById('tuto-next');
+        if(prevBtn) prevBtn.classList.toggle('hidden', currentStep === 0);
+        if(nextBtn) nextBtn.innerText = currentStep === steps.length - 1 ? '완료' : '다음';
+        if(nextBtn) nextBtn.style.display = currentStep === steps.length - 1 ? 'none' : 'block';
+      }
+
+      function next() {
+        if (currentStep < steps.length - 1) {
+          currentStep++;
+          updatePos();
+        } else {
+          close();
+          switchView('checklist');
+        }
+      }
+      
+      function prev() {
+        if (currentStep > 0) {
+          currentStep--;
+          updatePos();
+        }
+      }
+
+      function open() {
+        currentStep = 0;
+        const modal = document.getElementById('tutorial-modal');
+        modal.classList.remove('hidden');
+        render();
+      }
+      
+      function close() {
+        document.getElementById('tutorial-modal').classList.add('hidden');
+      }
+
+      return { open, close, next, prev };
+    })();
+
     // --- UI CONTROLLER FOR SCORE & NOTIFICATIONS ---
     const ScoreUI = (() => {
       const getEl = (id) => document.getElementById(id);
       let isNotifOpen = false;
-      let isExpanded = true; // Default to expanded when opened via bell
+      let isExpanded = true; 
       let currentReasons = [];
       let currentScore = 0;
 
@@ -653,11 +887,10 @@
         currentReasons = analysis.reasons;
         currentScore = AutomationAnalyzer.computeScore(analysis);
         
-        // Update Bar
         const barFill = getEl('pas-fill');
+        if(!barFill) return; 
+
         let color, statusText;
-        
-        // Use clamped score for bar width (0-100%)
         const clampedWidth = Math.max(0, Math.min(100, currentScore));
         
         if (currentScore >= 100) { color = '#008DF7'; statusText = '최적'; }
@@ -669,28 +902,27 @@
         barFill.style.backgroundColor = color;
         
         const valEl = getEl('pas-val');
-        valEl.innerText = currentScore;
-        valEl.style.color = color;
+        if(valEl) { valEl.innerText = currentScore; valEl.style.color = color; }
         
         const statusEl = getEl('pas-status-text');
-        statusEl.innerText = statusText;
-        statusEl.style.color = color;
+        if(statusEl) { statusEl.innerText = statusText; statusEl.style.color = color; }
 
-        // Update Description
         const criticals = currentReasons.filter(r => r.severity === 'critical');
         const descEl = getEl('pas-desc');
-        if (criticals.length > 0) {
-          descEl.innerText = `${criticals[0].message}`;
-          descEl.className = "text-xs font-bold text-red-500 text-right truncate max-w-[200px]";
-        } else if (currentScore >= 100) {
-          descEl.innerText = "완벽한 스마트홈입니다!";
-          descEl.className = "text-xs font-bold text-brand text-right";
-        } else if (currentScore >= 66) {
-          descEl.innerText = "훌륭한 구성입니다.";
-          descEl.className = "text-xs font-bold text-green-600 text-right";
-        } else {
-          descEl.innerText = "제안 항목을 확인해보세요.";
-          descEl.className = "text-xs font-bold text-slate-400 text-right";
+        if(descEl) {
+          if (criticals.length > 0) {
+            descEl.innerText = `${criticals[0].message}`;
+            descEl.className = "text-xs font-bold text-red-500 text-right truncate max-w-[200px]";
+          } else if (currentScore >= 100) {
+            descEl.innerText = "완벽한 스마트홈입니다!";
+            descEl.className = "text-xs font-bold text-brand text-right";
+          } else if (currentScore >= 66) {
+            descEl.innerText = "훌륭한 구성입니다.";
+            descEl.className = "text-xs font-bold text-green-600 text-right";
+          } else {
+            descEl.innerText = "제안 항목을 확인해보세요.";
+            descEl.className = "text-xs font-bold text-slate-400 text-right";
+          }
         }
 
         renderBell();
@@ -699,19 +931,19 @@
 
       function renderBell() {
         const btn = getEl('btn-gnb-notif');
+        if(!btn) return;
         if(!btn.innerHTML.includes('<svg')) {
            btn.innerHTML = `${getIcon('Bell', 20)}<span class="nudge-dot"></span>`;
         }
         const dot = btn.querySelector('.nudge-dot');
-        if(currentReasons.length > 0) dot.style.display = 'block';
-        else dot.style.display = 'none';
+        if(dot) dot.style.display = currentReasons.length > 0 ? 'block' : 'none';
         
         btn.setAttribute('aria-pressed', isNotifOpen);
       }
 
       function toggleNotif() {
         isNotifOpen = !isNotifOpen;
-        isExpanded = true; // Reset to expanded when opening
+        isExpanded = true;
         renderBell();
         renderStack();
       }
@@ -726,6 +958,7 @@
       function renderStack() {
         const stack = getEl('notif-stack');
         const backdrop = getEl('notif-backdrop');
+        if(!stack) return;
         
         if (!isNotifOpen) {
            stack.classList.remove('open');
@@ -736,7 +969,6 @@
         stack.classList.add('open');
         backdrop.classList.add('active');
         
-        // Sorting: Critical > Major > Minor > Info
         const sorted = [...currentReasons].sort((a,b) => {
           const map = { critical: 4, major: 3, minor: 2, info: 1 };
           return map[b.severity] - map[a.severity];
@@ -747,7 +979,6 @@
           return;
         }
 
-        // FOLDED STATE UI (Recent 1 + Preview)
         if (!isExpanded) {
            stack.classList.add('folded');
            const top = sorted[0];
@@ -766,7 +997,6 @@
             </div>`;
            getEl('stack-expand-btn').onclick = () => { isExpanded = true; renderStack(); };
         } 
-        // EXPANDED STATE UI (List)
         else {
            stack.classList.remove('folded');
            let html = `
@@ -843,7 +1073,8 @@
       activeRoomIdx: 0,
       sidebarMode: 'expanded',
       theme: 'light',
-      visibleRowIds: new Set()
+      visibleRowIds: new Set(),
+      currentView: 'checklist' // 'checklist' | 'help'
     };
 
     // Storage
@@ -866,13 +1097,18 @@
       state.rooms = loadRooms();
       state.theme = loadTheme();
       applyTheme();
+      
+      // Initial Render
       renderAll(); 
       setupGlobalDelegation(); 
       setupIndicatorObserver();
       window.addEventListener('resize', handleResize);
       handleResize();
       bindStaticEvents();
-      ScoreUI.render(state.rooms); // Initial Score Render
+      ScoreUI.render(state.rooms);
+      
+      // App Grid Render
+      renderAppGrid('all');
       
       // Top Bar Click
       const pasWrapper = document.getElementById('pas-wrapper');
@@ -888,16 +1124,135 @@
          if(e.key === 'Escape') ScoreUI.closeNotif();
       });
     }
+    
+    function switchView(viewName) {
+      state.currentView = viewName;
+      const checklistView = document.getElementById('view-checklist');
+      const helpView = document.getElementById('view-help');
+      const deviceBtns = document.querySelectorAll('#nav-device, #mobile-nav-device');
+      const helpBtns = document.querySelectorAll('#nav-help, #mobile-nav-help');
+      
+      // Elements to toggle visibility in GNB/Main
+      const pcTabs = document.getElementById('pc-tabs-container');
+      const mobileTabsWrapper = document.getElementById('mobile-tabs-wrapper');
+      const indicatorArea = document.getElementById('indicator-area');
+
+      const btnExportPc = document.getElementById('btn-export-pc');
+      const btnTutoPc = document.getElementById('btn-header-tuto');
+      const btnExportMob = document.getElementById('btn-export-mobile');
+      const btnTutoMob = document.getElementById('btn-tuto-mobile');
+
+      if (viewName === 'help') {
+        checklistView.classList.add('hidden');
+        helpView.classList.remove('hidden');
+        
+        // Hide Tabs & Indicator
+        if(pcTabs) pcTabs.parentElement.classList.add('invisible');
+        if(mobileTabsWrapper) mobileTabsWrapper.classList.add('hidden');
+        if(indicatorArea) indicatorArea.classList.add('hidden');
+        
+        // Button Logic
+        if(btnExportPc) { btnExportPc.classList.add('hidden'); btnExportPc.classList.remove('md:flex'); }
+        if(btnTutoPc) { btnTutoPc.classList.remove('hidden'); btnTutoPc.classList.add('md:flex'); }
+        if(btnExportMob) btnExportMob.classList.add('hidden');
+        if(btnTutoMob) btnTutoMob.classList.remove('hidden');
+
+        // Nav Styling (Active Help)
+        deviceBtns.forEach(b => {
+           b.classList.remove('text-brand', 'bg-white/50', 'dark:bg-slate-800/50');
+           b.classList.add('text-slate-500', 'hover:bg-white/50');
+        });
+        
+        helpBtns.forEach(b => {
+           b.classList.remove('text-slate-500', 'hover:bg-white/50');
+           b.classList.add('text-brand', 'bg-white/50', 'dark:bg-slate-800/50');
+        });
+        
+        window.scrollTo({top: 0});
+      } else {
+        checklistView.classList.remove('hidden');
+        helpView.classList.add('hidden');
+        
+        // Show Tabs & Indicator
+        if(pcTabs) pcTabs.parentElement.classList.remove('invisible');
+        if(mobileTabsWrapper) mobileTabsWrapper.classList.remove('hidden');
+        if(indicatorArea) indicatorArea.classList.remove('hidden');
+        
+        // Button Logic
+        if(btnExportPc) { btnExportPc.classList.remove('hidden'); btnExportPc.classList.add('md:flex'); }
+        if(btnTutoPc) { btnTutoPc.classList.add('hidden'); btnTutoPc.classList.remove('md:flex'); }
+        if(btnExportMob) btnExportMob.classList.remove('hidden');
+        if(btnTutoMob) btnTutoMob.classList.add('hidden');
+        
+        // Nav Styling (Active Device)
+        helpBtns.forEach(b => {
+           b.classList.remove('text-brand', 'bg-white/50', 'dark:bg-slate-800/50');
+           b.classList.add('text-slate-500', 'hover:bg-white/50');
+        });
+        deviceBtns.forEach(b => {
+           b.classList.remove('text-slate-500', 'hover:bg-white/50');
+           b.classList.add('text-brand', 'bg-white/50', 'dark:bg-slate-800/50');
+        });
+      }
+    }
+
+    function renderAppGrid(filter = 'all') {
+      const tabsContainer = document.getElementById('app-filter-tabs');
+      const gridContainer = document.getElementById('app-store-grid');
+      if(!tabsContainer || !gridContainer) return;
+      
+      // Render Tabs
+      const filters = [
+         { id: 'all', label: '전체' }, { id: 'phone', label: '폰' }, { id: 'tab', label: '탭' },
+         { id: 'watch', label: '워치' }, { id: 'pc', label: 'PC' }, { id: 'tv', label: 'TV' }, { id: 'car', label: '자동차' }
+      ];
+      
+      tabsContainer.innerHTML = filters.map(f => `
+        <button onclick="renderAppGrid('${f.id}')" class="px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filter === f.id ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}">
+          ${f.label}
+        </button>
+      `).join('');
+      
+      // Render Cards
+      const filteredLinks = filter === 'all' ? APP_LINKS : APP_LINKS.filter(l => l.tags.includes(filter));
+      
+      gridContainer.innerHTML = filteredLinks.map(link => `
+        <a href="${link.url}" target="_blank" class="shrink-0 w-64 h-80 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col overflow-hidden snap-center">
+          <div class="h-40 ${link.color} relative flex items-center justify-center">
+             <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-500">
+               ${getIcon(link.icon, 40)}
+             </div>
+             <div class="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black/20 to-transparent"></div>
+          </div>
+          <div class="p-6 flex flex-col flex-1">
+            <h4 class="text-xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-brand transition-colors">${link.name}</h4>
+            <div class="flex flex-wrap gap-1 mb-auto">
+               ${link.tags.map(t => `<span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('')}
+            </div>
+            <div class="flex items-center text-sm font-bold text-slate-500 group-hover:text-brand transition-colors mt-4">
+               설치하기 ${getIcon('ExternalLink', 14, 'ml-2')}
+            </div>
+          </div>
+        </a>
+      `).join('');
+    }
 
     function bindStaticEvents() {
       const getEl = (id) => document.getElementById(id);
       if(getEl('btn-sidebar-toggle')) getEl('btn-sidebar-toggle').addEventListener('click', toggleSidebar);
       if(getEl('btn-export-pc')) getEl('btn-export-pc').addEventListener('click', exportToPNG);
       if(getEl('btn-export-mobile')) getEl('btn-export-mobile').addEventListener('click', exportToPNG);
+      if(getEl('btn-header-tuto')) getEl('btn-header-tuto').addEventListener('click', TutorialController.open);
+      
       if(getEl('btn-gnb-more')) getEl('btn-gnb-more').addEventListener('click', (e) => openGnbPopover(e.currentTarget));
       if(getEl('btn-gnb-notif')) getEl('btn-gnb-notif').addEventListener('click', ScoreUI.toggleNotif); 
-      if(getEl('nav-help')) getEl('nav-help').addEventListener('click', openHelpModal);
-      if(getEl('mobile-nav-help')) getEl('mobile-nav-help').addEventListener('click', openHelpModal);
+      
+      // Navigation Switching
+      if(getEl('nav-device')) getEl('nav-device').addEventListener('click', () => switchView('checklist'));
+      if(getEl('mobile-nav-device')) getEl('mobile-nav-device').addEventListener('click', () => switchView('checklist'));
+      
+      if(getEl('nav-help')) getEl('nav-help').addEventListener('click', () => switchView('help'));
+      if(getEl('mobile-nav-help')) getEl('mobile-nav-help').addEventListener('click', () => switchView('help'));
     }
 
     function renderAll() {
@@ -1009,7 +1364,6 @@
         const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
         const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
 
-        // NOTE: marquee structure: .marquee > .marquee__inner > [span text][span text duplicate]
         return `
           <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
             <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
@@ -1030,46 +1384,30 @@
         `;
       }).join('');
 
-      // After DOM is inserted, initialize marquee animations
       document.querySelectorAll('.marquee').forEach(marquee => {
         const inner = marquee.querySelector('.marquee__inner');
         if (!inner) return;
-
-        // pick the first text span (original)
         const first = inner.querySelector('.marquee-text');
         if (!first) return;
-
-        // ensure layout is calculated
         const containerWidth = marquee.clientWidth;
-        const contentWidth = first.offsetWidth; // width of single text
-        const gapPx = 20; // spacing between duplicated texts (tuneable)
-        // If content fits, do nothing (no animation)
+        const contentWidth = first.offsetWidth;
+        const gapPx = 20;
         if (contentWidth <= containerWidth) {
-          // ensure only the first copy is visible and remove duplicate to avoid accessibility duplication
           const duplicate = inner.querySelectorAll('.marquee-text')[1];
           if (duplicate) duplicate.style.display = 'none';
           inner.style.transform = 'none';
           inner.style.animation = 'none';
           return;
         }
-
-        // Show duplicate (we already added duplicate in HTML)
-        // Set CSS variable for translate distance (we want to scroll one copy width + gap)
         const translateDistance = contentWidth + gapPx;
         inner.style.setProperty('--marquee-translate', `${translateDistance}px`);
-
-        // compute duration based on a pixels-per-second speed (tweak as needed)
-        const pxPerSecond = 20; // 60px/s — 원하는 속도로 변경
+        const pxPerSecond = 20;
         const durationSeconds = (translateDistance) / pxPerSecond;
-
-        // set animation using the keyframes; use linear infinite loop
         inner.style.animation = `marquee-slide ${durationSeconds}s linear infinite`;
-        // set a small gap between repeats by applying margin-right on first copy
         first.style.marginRight = `${gapPx}px`;
       });
     }
 
-    // helper: basic HTML escape to avoid injection when rendering device keys
     function escapeHtml (unsafe) {
       return unsafe.replace(/[&<"'>]/g, function(m) {
         switch (m) {
@@ -1431,21 +1769,6 @@
       };
     }
 
-    function openHelpModal() {
-      const html = `
-        <div class="p-6 space-y-4 text-slate-700 dark:text-slate-300 leading-relaxed">
-          <p><strong>ShoppingThings</strong>는 스마트홈 기기 목록을 쉽게 관리하고 공유할 수 있는 도구입니다.</p>
-          <ul class="list-disc pl-5 space-y-2">
-            <li><strong>방 관리:</strong> 상단의 탭이나 + 버튼으로 방을 추가하고 이름을 변경할 수 있습니다.</li>
-            <li><strong>기기 추가:</strong> 각 방에서 '기기 추가' 버튼을 누르거나, 직접 입력하여 기기를 추가하세요.</li>
-            <li><strong>자동완성:</strong> 디바이스 이름, 프로토콜, 자동화 입력 시 추천 목록이 나타납니다.</li>
-            <li><strong>이미지 저장:</strong> 우측 상단(모바일은 우측 하단)의 카메라 아이콘을 눌러 현재 목록을 PNG 이미지로 저장할 수 있습니다.</li>
-            <li><strong>데이터 저장:</strong> 모든 데이터는 브라우저에 자동 저장됩니다.</li>
-          </ul>
-        </div>`;
-      openModal(html, '도움말');
-    }
-
     function openPopover(anchor, html) {
       const root = document.getElementById('popover-root');
       const rect = anchor.getBoundingClientRect();
@@ -1550,7 +1873,7 @@
       Object.assign(tile.style, { position: 'absolute', left: '0', top: '0', width: document.documentElement.scrollWidth+'px', height: document.documentElement.scrollHeight+'px', pointerEvents: 'none', zIndex: '99999', display: 'flex', flexWrap: 'wrap', overflow: 'hidden' });
       for(let i=0; i<200; i++) {
         const t = document.createElement('div');
-        t.textContent = 'Shopping Things';
+        t.textContent = 'ShoppingThings';
         Object.assign(t.style, { opacity: '0.01', fontSize: '36px', transform: 'rotate(-12deg)', margin: '8px', fontFamily: 'SamsungSharpSans', fontWeight: 'bold' });
         tile.appendChild(t);
       }
