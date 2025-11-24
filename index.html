@@ -62,7 +62,7 @@
     /* Custom Fonts */
     @font-face {
       font-family: 'SamsungSharpSans';
-      src: url('fonts\SamsungSharpSans-Bold.TTF');
+      src: url('fonts/SamsungSharpSans-Bold.TTF');
       font-weight: bold;
       font-style: normal;
       font-display: swap;
@@ -975,8 +975,8 @@
         const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
         const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
         return `
-          <div class="flex items-center gap-3 p-2 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-7 h-7 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+          <div class="flex items-center gap-3 pl-2 pr-3 h-12 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
+            <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
               <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
             </div>
             <div class="flex-1 overflow-hidden min-w-0">
@@ -1499,4 +1499,3 @@
   </script>
 </body>
 </html>
-
