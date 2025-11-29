@@ -260,8 +260,6 @@
 
       <!-- Actions -->
       <div class="flex items-center gap-2 shrink-0">
-        <button id="btn-export-pc" class="hidden md:flex btn-primary bg-gradient-to-r from-brand-light to-brand text-white px-4 py-2 rounded-full text-sm font-bold items-center gap-2 shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-95">PNG 저장</button>
-        <button id="btn-header-tuto" class="hidden btn-primary bg-gradient-to-r from-brand-light to-brand text-white px-4 py-2 rounded-full text-sm font-bold items-center gap-2 shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-95">튜토리얼</button>
         <div class="flex items-center">
           <button id="btn-gnb-notif" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors relative" aria-label="알림" aria-pressed="false">
              <span class="nudge-dot"></span>
@@ -298,6 +296,9 @@
       
       <!-- View: Checklist -->
       <div id="view-checklist" class="w-full transition-opacity duration-300">
+        <!-- Map View Widget -->
+        <div id="map-view-area" class="w-full mb-8"></div>
+        
         <!-- Progressive Automation Score Widget -->
         <div id="pas-wrapper" class="w-full mb-8 cursor-pointer select-none group" title="클릭하여 상세 분석 보기">
           <div class="flex items-end justify-between mb-2 px-1">
@@ -493,10 +494,10 @@
   </div>
 
   <!-- Mobile FAB -->
-  <button id="btn-export-mobile" class="md:hidden fixed right-4 bottom-28 z-50 bg-gradient-to-r from-brand-light to-brand text-white pl-4 pr-6 py-3 rounded-full shadow-2xl shadow-brand/40 flex items-center gap-2 active:scale-95 transition-transform no-print-target">
+  <button id="btn-export-mobile" class="fixed right-4 bottom-28 z-50 bg-gradient-to-r from-brand-light to-brand text-white pl-4 pr-6 py-3 rounded-full shadow-2xl shadow-brand/40 flex items-center gap-2 active:scale-95 transition-transform no-print-target">
     <span class="font-bold text-sm">PNG 저장</span>
   </button>
-  <button id="btn-tuto-mobile" onclick="TutorialController.open()" class="md:hidden hidden fixed right-4 bottom-28 z-50 bg-gradient-to-r from-brand-light to-brand text-white pl-4 pr-6 py-3 rounded-full shadow-2xl shadow-brand/40 flex items-center gap-2 active:scale-95 transition-transform no-print-target">
+  <button id="btn-tuto-mobile" onclick="TutorialController.open()" class="hidden fixed right-4 bottom-28 z-50 bg-gradient-to-r from-brand-light to-brand text-white pl-4 pr-6 py-3 rounded-full shadow-2xl shadow-brand/40 flex items-center gap-2 active:scale-95 transition-transform no-print-target">
     <span class="font-bold text-sm">튜토리얼</span>
   </button>
 
@@ -579,9 +580,9 @@
 
     // EXTERNAL LINKS & APPS
     const APP_LINKS = [
-      { name: 'Galaxy Store', tags: ['phone', 'tab', 'watch'], url: 'https://galaxystore.samsung.com/prepost/000004262296', color: 'bg-pink-500', icon: 'Grid' },
-      { name: 'Play Store', tags: ['phone', 'watch'], url: 'https://play.google.com/store/apps/details?id=com.samsung.android.oneconnect&hl=ko', color: 'bg-green-500', icon: 'Play' },
-      { name: 'App Store', tags: ['phone', 'watch'], url: 'https://apps.apple.com/kr/app/samsung-smartthings/id1222822904', color: 'bg-blue-500', icon: 'Box' },
+      { name: 'Galaxy Store', tags: ['phone', 'watch'], url: 'https://galaxystore.samsung.com/prepost/000004262296', color: 'bg-pink-500', icon: 'Grid' },
+      { name: 'Play Store', tags: ['phone', 'tab', 'watch'], url: 'https://play.google.com/store/apps/details?id=com.samsung.android.oneconnect&hl=ko', color: 'bg-green-500', icon: 'Play' },
+      { name: 'App Store', tags: ['phone', 'tab', 'watch'], url: 'https://apps.apple.com/kr/app/samsung-smartthings/id1222822904', color: 'bg-blue-500', icon: 'Box' },
       { name: 'Microsoft Store', tags: ['pc'], url: 'https://apps.microsoft.com/detail/9n3zbh5v7hx6?hl=ko-KR&gl=KR', color: 'bg-blue-600', icon: 'Grid' },
       { name: 'Samsung TV', tags: ['tv'], url: '#', color: 'bg-indigo-900', icon: 'Grid' },
       { name: 'Pleos', tags: ['car'], url: '#', color: 'bg-slate-700', icon: 'Play' }
@@ -805,6 +806,65 @@
 
       return { analyze, computeScore };
     })();
+
+    // --- MAP VIEW RENDERER ---
+    function renderMapView() {
+      const container = document.getElementById('map-view-area');
+      if(!container) return;
+      
+      const rooms = state.rooms;
+      if(rooms.length === 0) { container.innerHTML = ''; return; }
+
+      // Simple calculation for bubble sizes
+      // Small: 0-3 items, Medium: 4-6, Large: 7+
+      const bubbles = rooms.map((r, i) => {
+         const qty = r.rows.reduce((acc, row) => acc + (row.qty || 1), 0);
+         let sizeClass = 'w-24 h-24'; // default small
+         if (qty >= 7) sizeClass = 'w-40 h-40';
+         else if (qty >= 4) sizeClass = 'w-32 h-32';
+         
+         // Opacity for empty
+         const opacityClass = qty === 0 ? 'opacity-40 grayscale border-dashed border-2' : 'shadow-lg border border-white/20';
+         const bgClass = qty === 0 ? 'bg-slate-100 dark:bg-slate-800' : 'bg-gradient-to-br from-white/80 to-blue-50/80 dark:from-slate-800/80 dark:to-slate-900/80 backdrop-blur-md';
+
+         // Tooltip content
+         const deviceList = r.rows.map(row => `${row.device} (${row.qty})`).join(', ') || '기기 없음';
+
+         return `
+           <div class="relative group cursor-pointer transition-all duration-300 hover:scale-105 hover:z-10" onclick="scrollToRoom(${i})">
+              <div class="${sizeClass} ${bgClass} ${opacityClass} rounded-2xl flex flex-col items-center justify-center p-2 text-center relative overflow-hidden transition-all group-hover:shadow-brand/20 group-hover:border-brand/50">
+                  <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">ROOM</div>
+                  <div class="text-sm font-black text-slate-800 dark:text-slate-100 truncate w-full px-1">${r.name}</div>
+                  <div class="mt-2 text-xs font-bold ${qty > 0 ? 'text-brand' : 'text-slate-400'} bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded-full">${qty} Devices</div>
+              </div>
+              
+              <!-- Tooltip -->
+              <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white text-xs rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
+                 <div class="font-bold mb-1 border-b border-white/10 pb-1">${r.name}</div>
+                 <div class="leading-relaxed text-slate-300">${deviceList}</div>
+                 <div class="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45"></div>
+              </div>
+           </div>
+         `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="flex flex-wrap items-center justify-center gap-2 p-6 bg-slate-50/50 dark:bg-slate-900/30 rounded-[2.5rem] border border-slate-100 dark:border-slate-800/50 mb-8 select-none">
+           ${bubbles}
+        </div>
+      `;
+    }
+    
+    function scrollToRoom(idx) {
+        const els = document.querySelectorAll('.room-card');
+        if(els[idx]) {
+           const y = els[idx].getBoundingClientRect().top + window.scrollY - 140;
+           window.scrollTo({ top: y, behavior: 'smooth' });
+           // Highlight effect
+           els[idx].classList.add('ring-4', 'ring-brand/50', 'transition-all', 'duration-500');
+           setTimeout(() => els[idx].classList.remove('ring-4', 'ring-brand/50'), 1500);
+        }
+    }
 
     // --- TUTORIAL CONTROLLER ---
     const TutorialController = (() => {
@@ -1102,6 +1162,7 @@
     const saveRooms = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.rooms));
       ScoreUI.render(state.rooms); // Hook for Score Update
+      renderMapView(); // Update Map View
     };
     const loadTheme = () => localStorage.getItem('shoppingthings:theme') || 'light';
     const saveTheme = (t) => localStorage.setItem('shoppingthings:theme', t);
@@ -1120,9 +1181,11 @@
       handleResize();
       bindStaticEvents();
       ScoreUI.render(state.rooms);
+      renderMapView();
       
       // App Grid Render
       renderAppGrid('all');
+      setupDragScroll(document.getElementById('app-store-grid')); // Apply Drag Scroll
       
       // Top Bar Click
       const pasWrapper = document.getElementById('pas-wrapper');
@@ -1254,9 +1317,10 @@
     function bindStaticEvents() {
       const getEl = (id) => document.getElementById(id);
       if(getEl('btn-sidebar-toggle')) getEl('btn-sidebar-toggle').addEventListener('click', toggleSidebar);
-      if(getEl('btn-export-pc')) getEl('btn-export-pc').addEventListener('click', exportToPNG);
+      
+      // FAB buttons exist in DOM and are controlled via CSS/JS visibility
       if(getEl('btn-export-mobile')) getEl('btn-export-mobile').addEventListener('click', exportToPNG);
-      if(getEl('btn-header-tuto')) getEl('btn-header-tuto').addEventListener('click', TutorialController.open);
+      if(getEl('btn-tuto-mobile')) getEl('btn-tuto-mobile').addEventListener('click', TutorialController.open);
       
       if(getEl('btn-gnb-more')) getEl('btn-gnb-more').addEventListener('click', (e) => openGnbPopover(e.currentTarget));
       if(getEl('btn-gnb-notif')) getEl('btn-gnb-notif').addEventListener('click', ScoreUI.toggleNotif); 
@@ -1318,8 +1382,6 @@
     function renderHeader() {
       const menuBtn = document.getElementById('btn-sidebar-toggle');
       if(menuBtn && !menuBtn.innerHTML.includes('<svg')) menuBtn.innerHTML = getIcon('Menu', 20);
-      const exportPc = document.getElementById('btn-export-pc');
-      if(exportPc && !exportPc.innerHTML.includes('PNG')) exportPc.innerHTML = `${getIcon('Camera', 16)} PNG 저장`;
       const moreBtn = document.getElementById('btn-gnb-more');
       if(moreBtn && !moreBtn.innerHTML.includes('<svg')) moreBtn.innerHTML = getIcon('MoreHorizontal', 20);
 
@@ -1382,21 +1444,21 @@
         const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
 
         return `
-          <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+          <div class="flex items-center gap-3 pl-2 pr-3 h-12 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
+            <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
               <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
             </div>
 
             <div class="flex-1 overflow-hidden min-w-0">
               <div class="marquee">
                 <div class="marquee__inner">
-                  <span class="marquee-text inline-block text-base font-medium text-slate-700 dark:text-slate-200">${escapeHtml(key)}</span>
-                  <span class="marquee-text inline-block text-base font-medium text-slate-700 dark:text-slate-200" aria-hidden="true">${escapeHtml(key)}</span>
+                  <span class="marquee-text inline-block text-sm font-medium text-slate-700 dark:text-slate-200">${escapeHtml(key)}</span>
+                  <span class="marquee-text inline-block text-sm font-medium text-slate-700 dark:text-slate-200" aria-hidden="true">${escapeHtml(key)}</span>
                 </div>
               </div>
             </div>
 
-            <div class="font-bold text-brand-dark dark:text-brand-light text-base pr-2 shrink-0">${counts[key]}</div>
+            <div class="font-bold text-brand-dark dark:text-brand-light text-sm pr-2 shrink-0">${counts[key]}</div>
           </div>
         `;
       }).join('');
@@ -1671,20 +1733,61 @@
     }
 
     function setupDragScroll(ele) {
-      if(!ele) return;
-      let pos = { top: 0, left: 0, x: 0, y: 0 };
+      if(!ele || ele.dataset.dragScrollInit) return;
+      ele.dataset.dragScrollInit = "true";
+      
+      let pos = { left: 0, x: 0 };
       let isDown = false;
-      ele.addEventListener('mousedown', (e) => {
-        isDown = true; pos = { left: ele.scrollLeft, x: e.clientX };
-        ele.style.cursor = 'grabbing'; ele.style.userSelect = 'none';
-      });
-      document.addEventListener('mousemove', (e) => {
+      let isDragging = false;
+      let startX = 0;
+
+      const onMouseDown = (e) => {
+        isDown = true;
+        isDragging = false;
+        startX = e.clientX;
+        pos = { left: ele.scrollLeft, x: e.clientX };
+        
+        ele.style.cursor = 'grabbing';
+        ele.style.userSelect = 'none';
+        ele.style.scrollSnapType = 'none'; // Disable snap for smooth dragging
+        
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      };
+
+      const onMouseMove = (e) => {
         if(!isDown) return;
-        const dx = e.clientX - pos.x; ele.scrollLeft = pos.left - dx;
-      });
-      document.addEventListener('mouseup', () => {
-        isDown = false; ele.style.cursor = 'grab'; ele.style.removeProperty('user-select');
-      });
+        e.preventDefault();
+        const dx = e.clientX - pos.x;
+        ele.scrollLeft = pos.left - dx;
+        
+        if(Math.abs(e.clientX - startX) > 5) {
+            isDragging = true;
+        }
+      };
+
+      const onMouseUp = (e) => {
+        isDown = false;
+        ele.style.cursor = 'grab';
+        ele.style.removeProperty('user-select');
+        ele.style.removeProperty('scroll-snap-type'); // Restore snap
+        
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        
+        if (isDragging) {
+           // Prevent click event propagation if it was a drag
+           const preventClick = (ev) => {
+             ev.preventDefault();
+             ev.stopPropagation();
+             window.removeEventListener('click', preventClick, true);
+           };
+           window.addEventListener('click', preventClick, true);
+        }
+      };
+
+      ele.addEventListener('mousedown', onMouseDown);
+      ele.style.cursor = 'grab'; // Initial cursor
     }
 
     function openModal(contentHTML, title, backCallback = null) {
