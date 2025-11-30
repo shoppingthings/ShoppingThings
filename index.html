@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -334,24 +335,10 @@
       <div id="view-checklist" class="w-full transition-opacity duration-300">
         <!-- Map View Widget -->
         <div id="map-view-area" class="w-full mb-8"></div>
+
         
         <!-- Progressive Automation Score Widget -->
         <div id="pas-wrapper" class="w-full mb-8 cursor-pointer select-none group" title="클릭하여 상세 분석 보기">
-          <div class="flex items-end justify-between mb-2 px-1">
-            <div class="flex flex-col">
-              <div class="flex items-baseline gap-2">
-                <span class="text-sm font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Automation Score</span>
-              </div>
-              <div class="flex items-baseline gap-1 mt-1">
-                <span id="pas-val" class="text-4xl font-black text-slate-800 dark:text-white leading-none tracking-tight">0</span>
-                <span class="text-lg font-bold text-slate-400">/ 100</span>
-              </div>
-            </div>
-            <div class="flex flex-col items-end">
-               <div id="pas-status-text" class="text-3xl font-black text-slate-300 dark:text-slate-600 mb-1">분석 중</div>
-               <div id="pas-desc" class="text-xs font-bold text-slate-400 text-right">잠시만 기다려주세요</div>
-            </div>
-          </div>
           
           <div class="relative w-full h-10 bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-600">
              <div class="absolute left-[33%] top-0 bottom-0 w-[2px] bg-white dark:bg-slate-800 z-10 opacity-30"></div>
@@ -360,8 +347,25 @@
                 <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent"></div>
              </div>
           </div>
+          <div class="flex items-end justify-between mb-2 px-1">
+            <div class="flex flex-col">
+              <div class="flex items-baseline gap-1 mt-1">
+                <span id="pas-val" class="text-4xl font-black text-slate-800 dark:text-white leading-none tracking-tight">0</span>
+                <span class="text-lg font-bold text-slate-400">/ 100</span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Automation Score</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-end">
+               <div id="pas-status-text" class="text-3xl font-black text-slate-300 dark:text-slate-600 mb-1">분석 중</div>
+               <div id="pas-desc" class="text-xs font-bold text-slate-400 text-right">잠시만 기다려주세요</div>
+            </div>
+          </div>
+          
         </div>
-
+        <!-- Automation Widgets (New) -->
+        <div id="automation-widgets-area" class="w-full mb-8"></div>
         <div id="widgets-area" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 w-full mb-6"></div>
         <div id="rooms-area" class="flex flex-col gap-6"></div>
       </div>
@@ -644,10 +648,200 @@
         Grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
         ExternalLink: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/>',
         Share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
-        Book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
+        Book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+        Zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+        Sun: '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+        Sunrise: '<path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/>',
+        Music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+        Monitor: '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
+        Columns: '<path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18"/>',
+        Wind: '<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>',
+        Fan: '<path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/>',
+        Door: '<path d="M4 22h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2Z"/><path d="M16 12h.01"/>',
+        Flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.2.5-3.3.3-1.12.5-1.68 1-2.5 0 0 1.5-1 2-2.5 0 2.5.5 5.5 1.5 8.25Z"/>'
       };
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}">${paths[name] || ''}</svg>`;
     }
+
+    // --- AUTOMATION RULES & ENGINE ---
+    const AUTOMATION_RULES = [
+      {
+        id: 'auto_light', name: '자동불 자동화', icon: 'Sun',
+        desc: '동작감지센서나 재실센서를 통해 사람이 감지되면 자동으로 조명을 켭니다.',
+        check: (devs) => {
+          const sensors = devs.filter(d => ['sensor_motion', 'sensor_presence'].some(c => d.caps.includes(c)));
+          const lights = devs.filter(d => d.caps.includes('light'));
+          return (sensors.length > 0 && lights.length > 0) ? [...sensors, ...lights] : null;
+        }
+      },
+      {
+        id: 'wakeup_light', name: '기상불 자동화', icon: 'Sunrise',
+        desc: '아침 기상 시간에 맞춰 조명이 서서히 밝아지며 자연스러운 기상을 돕습니다.',
+        check: (devs) => {
+          const lights = devs.filter(d => d.caps.includes('light'));
+          return lights.length > 0 ? lights : null;
+        }
+      },
+      {
+        id: 'sleep_light', name: '수등 자동화', icon: 'Moon',
+        desc: '취침 시간에 맞춰 수면에 방해되지 않는 은은한 조명으로 자동 전환합니다.',
+        check: (devs) => {
+           const lights = devs.filter(d => d.caps.includes('light'));
+           return lights.length > 0 ? lights : null;
+        }
+      },
+      {
+        id: 'bulk_off', name: '일괄소등 자동', icon: 'LogOut',
+        desc: '외출 시 버튼 하나로 집안의 모든 조명을 한 번에 끕니다.',
+        check: (devs) => {
+           const switches = devs.filter(d => d.caps.includes('switch'));
+           const lights = devs.filter(d => d.caps.includes('light'));
+           return (switches.length > 0 && lights.length > 1) ? [...switches, ...lights] : null;
+        }
+      },
+      {
+        id: 'circadian', name: '하루조명', icon: 'Sun',
+        desc: '시간대에 따라 태양광과 유사한 색온도로 조명이 자동 조절됩니다.',
+        check: (devs) => {
+           const lights = devs.filter(d => d.caps.includes('light'));
+           return lights.length > 0 ? lights : null;
+        }
+      },
+      {
+        id: 'music_sync', name: '뮤직싱크', icon: 'Music',
+        desc: '음악 비트에 맞춰 조명 색상이 변하여 파티 분위기를 연출합니다.',
+        check: (devs) => {
+           const speakers = devs.filter(d => d.caps.includes('audio_out'));
+           const lights = devs.filter(d => d.caps.includes('light'));
+           return (speakers.length > 0 && lights.length > 0) ? [...speakers, ...lights] : null;
+        }
+      },
+      {
+        id: 'pc_auto', name: 'PC 자동화', icon: 'Monitor',
+        desc: 'PC 전원이 켜지면 주변 조명을 게이밍 모드로 전환하거나 스피커를 켭니다.',
+        check: (devs) => {
+           const plugs = devs.filter(d => d.caps.includes('smart_plug'));
+           return plugs.length > 0 ? plugs : null;
+        }
+      },
+      {
+        id: 'curtain_auto', name: '커튼/블라인드', icon: 'Columns',
+        desc: '일출/일몰 시간이나 기상 시간에 맞춰 커튼을 자동으로 여닫습니다.',
+        check: (devs) => {
+           const curtains = devs.filter(d => d.device.includes('커튼') || d.device.includes('블라인드'));
+           return curtains.length > 0 ? curtains : null;
+        }
+      },
+      {
+        id: 'cooling_auto', name: '냉방 자동화', icon: 'Wind',
+        desc: '실내 온도가 설정값보다 높아지면 에어컨을 자동으로 가동합니다.',
+        check: (devs) => {
+           const hvac = devs.filter(d => d.caps.includes('hvac'));
+           const sensors = devs.filter(d => d.caps.includes('sensor_temp'));
+           return (hvac.length > 0 && sensors.length > 0) ? [...hvac, ...sensors] : null;
+        }
+      },
+      {
+        id: 'vent_auto', name: '환기 자동화', icon: 'Fan',
+        desc: '공기질이 나빠지면 환기 시스템을 가동하거나 창문을 엽니다.',
+        check: (devs) => {
+           const vents = devs.filter(d => d.caps.includes('ventilation') || d.device.includes('창문'));
+           const sensors = devs.filter(d => d.caps.includes('sensor_air'));
+           return (vents.length > 0 && sensors.length > 0) ? [...vents, ...sensors] : null;
+        }
+      },
+      {
+        id: 'air_care', name: '공기조화 자동화', icon: 'Fan',
+        desc: '창문이 닫혀있을 때만 공기청정기나 에어컨을 가동하여 효율을 높입니다.',
+        check: (devs) => {
+           const doors = devs.filter(d => d.caps.includes('sensor_contact'));
+           const hvac = devs.filter(d => d.caps.includes('hvac') || d.device.includes('공기청정기'));
+           return (doors.length > 0 && hvac.length > 0) ? [...doors, ...hvac] : null;
+        }
+      },
+      {
+        id: 'sleep_mode', name: '취침 자동화', icon: 'Moon',
+        desc: '취침 모드 실행 시 가전제품을 조용하게 만들고 불필요한 전원을 차단합니다.',
+        check: (devs) => {
+           const relevant = devs.filter(d => d.caps.includes('switch') || d.caps.includes('light'));
+           return relevant.length > 0 ? relevant : null;
+        }
+      },
+      {
+        id: 'power_restore', name: '정전보상 자동화', icon: 'Zap',
+        desc: '정전 후 전기가 복구될 때 조명이 갑자기 켜지지 않도록 이전 상태를 유지합니다.',
+        check: (devs) => {
+           const lights = devs.filter(d => d.caps.includes('light'));
+           return lights.length > 0 ? lights : null;
+        }
+      },
+      {
+        id: 'fire_safety', name: '소방 대비 자동화', icon: 'Flame',
+        desc: '화재 감지 시 모든 조명을 켜고 대피 경로를 확보하며 알림을 보냅니다.',
+        check: (devs) => {
+           const smoke = devs.filter(d => d.device.includes('연기') || d.device.includes('화재'));
+           return smoke.length > 0 ? smoke : null;
+        }
+      },
+      {
+        id: 'ai_energy', name: 'AI 절약모드', icon: 'Zap',
+        desc: 'AI가 사용 패턴을 분석하여 가전제품의 에너지 사용량을 최적화합니다.',
+        check: (devs) => {
+           const targets = ['에어컨', '냉장고', '세탁기', '건조기', '에어드레서'];
+           const appliances = devs.filter(d => targets.some(t => d.device.includes(t)));
+           return appliances.length > 0 ? appliances : null;
+        }
+      },
+      {
+        id: 'energy_save', name: '전기 절약 자동화', icon: 'Zap',
+        desc: '사용하지 않는 시간대에 대기전력을 차단하여 전기요금을 절약합니다.',
+        check: (devs) => {
+           const plugs = devs.filter(d => d.caps.includes('smart_plug') || d.caps.includes('energy_monitor'));
+           return plugs.length > 0 ? plugs : null;
+        }
+      },
+      {
+        id: 'phone_noti', name: '스마트폰 알림', icon: 'Smartphone',
+        desc: '집안의 상태 변화(문 열림, 누수 등)를 스마트폰으로 즉시 알려줍니다.',
+        check: (devs) => {
+           const sensors = devs.filter(d => d.caps.some(c => c.startsWith('sensor')));
+           return sensors.length > 0 ? sensors : null;
+        }
+      },
+      {
+        id: 'middle_door', name: '중문 자동화', icon: 'Door',
+        desc: '현관에 들어서면 중문이 자동으로 열려 짐이 있어도 편리하게 입장합니다.',
+        check: (devs) => {
+           const motion = devs.filter(d => d.caps.includes('sensor_motion'));
+           // Assuming a motor/opener is needed, but motion implies capability to trigger if installed
+           return motion.length > 0 ? motion : null;
+        }
+      },
+      {
+        id: 'ac_dry', name: '에어컨 송풍', icon: 'Wind',
+        desc: '에어컨 끄기 전 자동 건조 기능을 활성화하여 곰팡이를 방지합니다.',
+        check: (devs) => {
+           const ac = devs.filter(d => d.device.includes('에어컨'));
+           return ac.length > 0 ? ac : null;
+        }
+      },
+      {
+        id: 'heating', name: '난방 자동화', icon: 'Sun',
+        desc: '외출 시 난방을 줄이고 귀가 전에 미리 따뜻하게 데워둡니다.',
+        check: (devs) => {
+           const heat = devs.filter(d => d.device.includes('보일러') || d.device.includes('온열'));
+           return heat.length > 0 ? heat : null;
+        }
+      },
+      {
+        id: 'window_auto', name: '자바라 자동화', icon: 'Columns',
+        desc: '창문 개폐기를 통해 환기하거나 비가 올 때 자동으로 창문을 닫습니다.',
+        check: (devs) => {
+           const wins = devs.filter(d => d.device.includes('창문') || d.device.includes('개폐기'));
+           return wins.length > 0 ? wins : null;
+        }
+      }
+    ];
 
     // --- PROGRESSIVE AUTOMATION SCORE ENGINE ---
     const AutomationAnalyzer = (() => {
@@ -789,7 +983,7 @@
              reasons.push({ code: 'ROBUSTNESS_BONUS', severity: 'minor', impact: 6, message: '센서 중복성/신뢰성 확보', related: [] });
         }
 
-        return { reasons, baseScore };
+        return { reasons, baseScore, devices };
       }
 
       function computeScore(analysis) {
@@ -841,6 +1035,68 @@
            ${bubbles}
         </div>
       `;
+    }
+
+    function renderAutomationWidgets() {
+      const container = document.getElementById('automation-widgets-area');
+      if(!container) return;
+
+      const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => ({ ...row, rIdx: ri, caps: CAPABILITY_MAP[row.device] || [] })));
+      const validAutomations = AUTOMATION_RULES.filter(rule => rule.check(devices) !== null);
+
+      if (validAutomations.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="backdrop-blur-mdp-6">
+           <div class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-y-6 gap-x-2 justify-items-center">
+             ${validAutomations.map(auto => {
+               const related = auto.check(devices) || [];
+               const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
+               return `
+                 <div class="flex flex-col items-center gap-2 group cursor-pointer relative" onclick="showAutoDetail('${auto.id}')">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-50 to-white dark:from-slate-800 dark:to-slate-700 shadow-md border border-slate-100 dark:border-slate-600 flex items-center justify-center text-brand group-hover:scale-110 group-hover:shadow-brand/20 group-hover:border-brand/50 transition-all">
+                       ${getIcon(auto.icon, 24)}
+                    </div>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300 text-center leading-tight max-w-[80px] break-keep">${auto.name}</span>
+                    
+                    <!-- Tooltip -->
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white text-xs rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
+                       <div class="font-bold mb-1 text-brand-light">${auto.name}</div>
+                       <div class="leading-relaxed text-slate-300">Triggered by:<br>${relatedNames}</div>
+                       <div class="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45"></div>
+                    </div>
+                 </div>
+               `;
+             }).join('')}
+           </div>
+        </div>
+      `;
+    }
+
+    function showAutoDetail(id) {
+       const auto = AUTOMATION_RULES.find(a => a.id === id);
+       if(!auto) return;
+       const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => ({ ...row, rIdx: ri, caps: CAPABILITY_MAP[row.device] || [] })));
+       const related = auto.check(devices) || [];
+       const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
+
+       const html = `
+         <div class="p-6 text-center">
+            <div class="w-20 h-20 mx-auto rounded-full bg-blue-50 dark:bg-slate-800 flex items-center justify-center text-brand mb-4 shadow-inner">
+               ${getIcon(auto.icon, 40)}
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">${auto.name}</h3>
+            <p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">${auto.desc}</p>
+            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left">
+               <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">필요 기기 (충족됨)</div>
+               <div class="text-sm font-medium text-slate-800 dark:text-slate-200">${relatedNames}</div>
+            </div>
+         </div>
+       `;
+       openModal(html, '자동화 상세');
     }
     
     function scrollToRoom(idx) {
@@ -1154,6 +1410,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.rooms));
       ScoreUI.render(state.rooms);
       renderMapView();
+      renderAutomationWidgets();
     };
     const loadTheme = () => localStorage.getItem('shoppingthings:theme') || 'light';
     const saveTheme = (t) => localStorage.setItem('shoppingthings:theme', t);
@@ -1328,6 +1585,7 @@
       renderIndicators();
       updateFab();
       renderMobileNav();
+      renderAutomationWidgets();
       initMarquees();
     }
 
@@ -2152,9 +2410,25 @@
         
         // Filter function: Returns true if node should be included
         const filterNode = (node) => {
-           if (node.id === 'btn-export-mobile' || node.id === 'btn-tuto-mobile') return true;
+           if (node.id === 'btn-export-mobile' || node.id === 'btn-tuto-mobile') return false;
            return !node.classList?.contains('no-print-target');
         };
+
+        // Manual Font Inlining to Avoid CORS issues with Google Fonts
+        const linkTags = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
+        const googleFontLink = linkTags.find(l => l.href.includes('fonts.googleapis.com'));
+        let styleTag = null;
+        
+        if (googleFontLink) {
+           try {
+             const resp = await fetch(googleFontLink.href);
+             const cssText = await resp.text();
+             styleTag = document.createElement('style');
+             styleTag.innerHTML = cssText;
+             document.head.appendChild(styleTag);
+             googleFontLink.classList.add('ignore-for-capture'); 
+           } catch(e) { console.warn('Font inline failed', e); }
+        }
 
         // Attempt 1: High Quality
         try {
@@ -2178,6 +2452,10 @@
             });
             downloadBlob(blob, `iot_shoppinglist_${dateStr}_optimized_shoppingthings.png`);
         }
+        
+        if(styleTag) styleTag.remove();
+        if(googleFontLink) googleFontLink.classList.remove('ignore-for-capture');
+
       } catch(e) { 
         console.error(e); 
         alert('이미지 저장에 실패했습니다. 잠시 후 다시 시도해주세요.'); 
