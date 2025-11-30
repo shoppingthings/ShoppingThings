@@ -239,6 +239,32 @@
     .slider-slide {
       scroll-snap-align: center;
     }
+    
+    
+    /* app-store-grid: vertical breathing room + smoother snap behavior */
+    #app-store-grid {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x proximity; /* proximity => 더 자연스러운 스냅 */
+      padding-top: 20px;   /* 위쪽 여백: hover 시 잘리는 문제 완화 */
+      padding-bottom: 40px;/* 아래쪽 여백: 그림자 및 hover 효과 공간 확보 */
+      scroll-padding-inline: 50px; /* 여유 좌우 스냅 패딩 (옵션) */
+      align-items: flex-start; /* 카드가 위로 잘리는 경우 완화 */
+    }
+
+    /* 카드(각 아이템) 가 반드시 중앙 스냅되도록 */
+    #app-store-grid > * {
+      scroll-snap-align: center;
+      -webkit-user-drag: none; /* 모바일/크롬에서 이미지 드래그 방지 보조 */
+    }
+
+    /* 카드 내부의 호버 확장(그라디언트 등) 때문에 잘리는 것 방지 */
+    #app-store-grid .group, /* 기존 카드 클래스들에 맞게 조정 가능 */
+    #app-store-grid .shrink-0 { 
+      overflow: visible;
+    }
   </style>
   <script type="importmap">
   {
@@ -591,12 +617,12 @@
 
     // EXTERNAL LINKS & APPS
     const APP_LINKS = [
-      { name: 'Galaxy Store', tags: ['phone', 'watch'], url: 'https://galaxystore.samsung.com/prepost/000004262296', color: 'bg-pink-500', icon: 'Grid' },
-      { name: 'Play Store', tags: ['phone', 'tab', 'watch'], url: 'https://play.google.com/store/apps/details?id=com.samsung.android.oneconnect&hl=ko', color: 'bg-green-500', icon: 'Play' },
-      { name: 'App Store', tags: ['phone', 'tab', 'watch'], url: 'https://apps.apple.com/kr/app/samsung-smartthings/id1222822904', color: 'bg-blue-500', icon: 'Box' },
-      { name: 'Microsoft Store', tags: ['pc'], url: 'https://apps.microsoft.com/detail/9n3zbh5v7hx6?hl=ko-KR&gl=KR', color: 'bg-blue-600', icon: 'Grid' },
-      { name: 'Samsung TV', tags: ['tv'], url: '#', color: 'bg-indigo-900', icon: 'Grid' },
-      { name: 'Pleos', tags: ['car'], url: '#', color: 'bg-slate-700', icon: 'Play' }
+      { name: 'Galaxy Store', tags: ['phone', 'watch'], url: 'https://galaxystore.samsung.com/prepost/000004262296', color: 'bg-pink-500', icon: 'Grid', logo: 'galaxystore.png' },
+      { name: 'Play Store', tags: ['phone', 'tab', 'watch'], url: 'https://play.google.com/store/apps/details?id=com.samsung.android.oneconnect&hl=ko', color: 'bg-green-500', icon: 'Play', logo: 'playstore.png' },
+      { name: 'App Store', tags: ['phone', 'tab', 'watch'], url: 'https://apps.apple.com/kr/app/samsung-smartthings/id1222822904', color: 'bg-blue-500', icon: 'Box', logo: 'appstore.png' },
+      { name: 'Microsoft Store', tags: ['pc'], url: 'https://apps.microsoft.com/detail/9n3zbh5v7hx6?hl=ko-KR&gl=KR', color: 'bg-blue-600', icon: 'Grid', logo: 'microsoft.png' },
+      { name: 'Samsung TV', tags: ['tv'], url: '#', color: 'bg-indigo-900', icon: 'Grid', logo: 'samsung.png' },
+      { name: 'Pleos', tags: ['car'], url: '#', color: 'bg-slate-700', icon: 'Play', logo: 'pleos.png' }
     ];
 
     // --- ICON HELPER ---
@@ -1301,19 +1327,31 @@
         </button>
       `).join('');
       
+      // APP_LINKS with Logo Support
+      const APP_LINKS = [
+        { name: 'Galaxy Store', tags: ['phone', 'watch'], url: 'https://galaxystore.samsung.com/prepost/000004262296', color: 'bg-pink-500', icon: 'Grid', logo: 'galaxystore.png' },
+        { name: 'Play Store', tags: ['phone', 'tab', 'watch'], url: 'https://play.google.com/store/apps/details?id=com.samsung.android.oneconnect&hl=ko', color: 'bg-green-500', icon: 'Play', logo: 'playstore.png' },
+        { name: 'App Store', tags: ['phone', 'tab', 'watch'], url: 'https://apps.apple.com/kr/app/samsung-smartthings/id1222822904', color: 'bg-blue-500', icon: 'Box', logo: 'appstore.png' },
+        { name: 'Microsoft Store', tags: ['pc'], url: 'https://apps.microsoft.com/detail/9n3zbh5v7hx6?hl=ko-KR&gl=KR', color: 'bg-blue-600', icon: 'Grid', logo: 'microsoft.png' },
+        { name: 'Samsung TV', tags: ['tv'], url: 'https://www.samsungsvc.co.kr/solution/2395698?assess=N', color: 'bg-indigo-900', icon: 'Grid', logo: 'samsung.png' },
+        { name: 'Pleos', tags: ['car'], url: 'https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%ED%98%84%EB%8C%80%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B7%B8%EB%A3%B9%EA%B3%BC-%EC%86%90%EC%9E%A1%EA%B3%A0-%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%99%88-%EC%BB%A4%EB%84%A5', color: 'bg-slate-700', icon: 'Play', logo: 'pleos.png' }
+      ];
+      
       // Render Cards
       const filteredLinks = filter === 'all' ? APP_LINKS : APP_LINKS.filter(l => l.tags.includes(filter));
       
-      gridContainer.innerHTML = filteredLinks.map(link => `
-        <a href="${link.url}" target="_blank" class="shrink-0 w-64 h-80 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col overflow-hidden snap-center">
-          <div class="h-40 ${link.color} relative flex items-center justify-center">
-             <div class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-500">
-               ${getIcon(link.icon, 40)}
+      gridContainer.innerHTML = filteredLinks.map((link, i) => `
+        <a href="${link.url}" target="_blank" class="shrink-0 w-56 h-96 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all group flex flex-col overflow-hidden snap-center">
+          <div class="h-48 ${link.color} relative flex items-center justify-center rounded-t-3xl">
+             <div class="w-24 h-24 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-500">
+               <!-- Image Icon with Fallback to SVG -->
+               <img src="images/icons/store/${link.logo}" alt="${link.name}" class="w-14 h-14 object-contain drop-shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+               <div style="display:none">${getIcon(link.icon, 40)}</div>
              </div>
-             <div class="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black/20 to-transparent"></div>
+             <div class="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/20 to-transparent"></div>
           </div>
           <div class="p-6 flex flex-col flex-1">
-            <h4 class="text-xl font-black text-slate-900 dark:text-white mb-1 group-hover:text-brand transition-colors">${link.name}</h4>
+            <h4 class="text-xl font-black text-slate-900 dark:text-white mb-2 group-hover:text-brand transition-colors">${link.name}</h4>
             <div class="flex flex-wrap gap-1 mb-auto">
                ${link.tags.map(t => `<span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('')}
             </div>
@@ -1760,61 +1798,179 @@
     }
 
     function setupDragScroll(ele) {
-      if(!ele || ele.dataset.dragScrollInit) return;
+      if (!ele || ele.dataset.dragScrollInit) return;
       ele.dataset.dragScrollInit = "true";
-      
-      let pos = { left: 0, x: 0 };
-      let isDown = false;
-      let isDragging = false;
-      let startX = 0;
 
-      const onMouseDown = (e) => {
-        isDown = true;
-        isDragging = false;
-        startX = e.clientX;
-        pos = { left: ele.scrollLeft, x: e.clientX };
-        
-        ele.style.cursor = 'grabbing';
-        ele.style.userSelect = 'none';
-        ele.style.scrollSnapType = 'none'; // Disable snap for smooth dragging
-        
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-      };
+      // Prevent native dragstart on images/anchors inside
+      Array.from(ele.querySelectorAll('img, a, svg')).forEach(n=>{
+        n.addEventListener('dragstart', e=>e.preventDefault(), {passive:false});
+      });
 
-      const onMouseMove = (e) => {
+      // helper: compute child centers and include exact edges
+      function computeSnapPositions() {
+        const children = Array.from(ele.children).filter(c => c.offsetWidth > 0);
+        const viewportCenter = ele.clientWidth / 2;
+        const positions = [];
+        // left edge (ensure we can snap fully left)
+        positions.push(0);
+        children.forEach(c=>{
+          const center = Math.round(c.offsetLeft + (c.offsetWidth / 2) - viewportCenter);
+          positions.push(Math.max(0, Math.min(ele.scrollWidth - ele.clientWidth, center)));
+        });
+        // rightmost edge (ensure fully right snap)
+        positions.push(Math.max(0, ele.scrollWidth - ele.clientWidth));
+        // unique & sorted
+        return Array.from(new Set(positions)).sort((a,b)=>a-b);
+      }
+
+      function nearestTo(target, arr){
+        let best = arr[0], bestd = Math.abs(target - arr[0]);
+        for(let i=1;i<arr.length;i++){
+          const d = Math.abs(target - arr[i]);
+          if(d < bestd){ bestd = d; best = arr[i]; }
+        }
+        return best;
+      }
+
+      // animate scrollLeft -> target with easing (promise)
+      function animateScrollTo(target, duration = 420) {
+        const start = ele.scrollLeft;
+        const change = target - start;
+        const startTime = performance.now();
+        function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+        return new Promise(resolve=>{
+          function step(now){
+            const t = Math.min(1, (now - startTime) / duration);
+            ele.scrollLeft = Math.round(start + change * easeOutCubic(t));
+            if(t < 1) requestAnimationFrame(step);
+            else resolve();
+          }
+          requestAnimationFrame(step);
+        });
+      }
+
+      // state for mouse drag + velocity calculation
+      let isDown = false, isDragging = false, startX = 0, startScroll = 0;
+      const samples = []; // {x,time}
+      const MAX_SAMPLE = 6;
+
+      function recordSample(x){
+        const now = performance.now();
+        samples.push({x, t: now});
+        while(samples.length > MAX_SAMPLE) samples.shift();
+      }
+      function calcVelocity(){ // px per ms
+        if(samples.length < 2) return 0;
+        const first = samples[0], last = samples[samples.length-1];
+        const dx = last.x - first.x;
+        const dt = last.t - first.t || 1;
+        return dx / dt;
+      }
+
+      // disable native selection while dragging
+      function setDraggingMode(on){
+        if(on){
+          document.documentElement.classList.add('app-dragging');
+          ele.style.cursor = 'grabbing';
+          ele.style.userSelect = 'none';
+        } else {
+          document.documentElement.classList.remove('app-dragging');
+          ele.style.cursor = 'grab';
+          ele.style.removeProperty('userSelect');
+        }
+      }
+
+      // On mouse down: init
+      function onMouseDown(e){
+        if(e.button !== 0) return;
+        isDown = true; isDragging = false;
+        startX = e.clientX; startScroll = ele.scrollLeft;
+        samples.length = 0; recordSample(e.clientX);
+
+        // temporarily disable CSS snap so user drag is free
+        ele.dataset.prevSnap = window.getComputedStyle(ele).getPropertyValue('scroll-snap-type') || '';
+        ele.style.scrollSnapType = 'none';
+
+        setDraggingMode(true);
+
+        document.addEventListener('mousemove', onMouseMove, {passive:false});
+        document.addEventListener('mouseup', onMouseUp, {passive:true});
+
+        // prevent native drag of anchors/images
+        if(e.target && e.target.closest && e.target.closest('a')) e.preventDefault();
+      }
+
+      function onMouseMove(e){
         if(!isDown) return;
         e.preventDefault();
-        const dx = e.clientX - pos.x;
-        ele.scrollLeft = pos.left - dx;
-        
-        if(Math.abs(e.clientX - startX) > 5) {
-            isDragging = true;
-        }
-      };
+        const dx = e.clientX - startX;
+        if(Math.abs(dx) > 6) isDragging = true;
+        ele.scrollLeft = Math.round(startScroll - dx);
+        recordSample(e.clientX);
+      }
 
-      const onMouseUp = (e) => {
+      async function onMouseUp(e){
+        if(!isDown) return;
         isDown = false;
-        ele.style.cursor = 'grab';
-        ele.style.removeProperty('user-select');
-        ele.style.removeProperty('scroll-snap-type'); // Restore snap
-        
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        
-        if (isDragging) {
-           // Prevent click event propagation if it was a drag
-           const preventClick = (ev) => {
-             ev.preventDefault();
-             ev.stopPropagation();
-             window.removeEventListener('click', preventClick, true);
-           };
-           window.addEventListener('click', preventClick, true);
+        setDraggingMode(false);
+        document.removeEventListener('mousemove', onMouseMove, {passive:false});
+        document.removeEventListener('mouseup', onMouseUp, {passive:true});
+
+        // compute predicted scroll with inertia
+        const velocity = calcVelocity(); // px per ms (positive means pointer moved right)
+        // pointer move right => we dragged left (since scrollLeft = startScroll - dx)
+        // so effective scroll velocity = -velocity
+        const scrollVelocity = -velocity; // px per ms
+        const INERTIA_MS = 300; // tune: how long inertia carries
+        const predicted = Math.round(ele.scrollLeft + scrollVelocity * INERTIA_MS);
+
+        // compute snap positions and choose nearest to predicted
+        const snaps = computeSnapPositions();
+        const target = nearestTo(predicted, snaps);
+
+        // Ensure edges are reachable: if very near edges snap to exact 0 or max
+        const maxScroll = Math.max(0, ele.scrollWidth - ele.clientWidth);
+        if(ele.scrollLeft <= 8) {
+          // if we were nearly at the start, snap to 0
+          await animateScrollTo(0, 280);
+        } else if(ele.scrollLeft >= maxScroll - 8) {
+          await animateScrollTo(maxScroll, 280);
+        } else {
+          // animate to target with duration tuned by distance
+          const distance = Math.abs(ele.scrollLeft - target);
+          const duration = Math.max(220, Math.min(800, Math.round(distance * 0.6) + 180));
+          await animateScrollTo(target, duration);
         }
-      };
+
+        // re-enable CSS snap AFTER animation to avoid immediate jump
+        // small delay to ensure smoothness
+        setTimeout(()=>{
+          ele.style.scrollSnapType = ele.dataset.prevSnap || 'x proximity';
+          delete ele.dataset.prevSnap;
+        }, 40);
+
+        // if we had dragged, block the click that would follow (prevents accidental link open)
+        if(isDragging){
+          const preventClick = (ev)=>{
+            ev.preventDefault(); ev.stopImmediatePropagation();
+            window.removeEventListener('click', preventClick, true);
+          };
+          window.addEventListener('click', preventClick, true);
+        }
+        isDragging = false;
+        samples.length = 0;
+      }
+
+      // support wheel -> horizontal scroll mapping for convenience
+      ele.addEventListener('wheel', (ev)=>{
+        if(Math.abs(ev.deltaY) > Math.abs(ev.deltaX)){
+          ele.scrollLeft += ev.deltaY;
+          ev.preventDefault();
+        }
+      }, { passive:false });
 
       ele.addEventListener('mousedown', onMouseDown);
-      ele.style.cursor = 'grab'; // Initial cursor
+      ele.style.cursor = 'grab';
     }
 
     function openModal(contentHTML, title, backCallback = null) {
