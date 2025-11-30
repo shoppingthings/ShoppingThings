@@ -289,7 +289,7 @@
   </header>
 
   <!-- Layout -->
-  <div class="pt-36 md:pt-20 flex max-w-7xl mx-auto px-4 gap-6">
+  <div class="pt-32 md:pt-20 flex max-w-7xl mx-auto px-4 gap-6">
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed top-24 bottom-4 bg-transparent transition-all duration-300 z-30 hidden md:flex flex-col gap-2 no-print-target w-48">
       <nav class="flex flex-col gap-1 w-full">
@@ -382,7 +382,7 @@
         <section class="max-w-6xl mx-auto w-full">
           <div class="mb-8">
             <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">스마트싱스로 시작하세요</h3>
-            <p class="text-slate-500 dark:text-slate-400 mb-6">다양한 기기에서 스마트싱스를 경험해보세요.</p>
+            <p class="text-slate-500 dark:text-slate-400 mb-6">이제 내 기기가 스마트홈의 컨트롤러로 바뀝니다. SmartThings를 지금 다운로드하세요. </p>
             
             <!-- Filter Tabs -->
             <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2" id="app-filter-tabs">
@@ -445,7 +445,7 @@
       
       <!-- Common Encouragement & Footer -->
       <section id="common-footer-section" class="mt-20 pb-32 md:pb-12 px-4 no-print">
-         <div class="max-w-3xl mx-auto text-center space-y-6">
+         <div class="max-w-3xl mx-auto text-center ">
             <div class="p-8 rounded-[2rem] bg-blue-50/50 dark:bg-slate-800/50 border border-blue-100 dark:border-slate-700 backdrop-blur-sm">
                <h4 class="text-xl font-black text-slate-800 dark:text-white mb-3">계획이 완성되었나요?</h4>
                <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
@@ -458,7 +458,7 @@
                </div>
             </div>
             
-            <footer class="text-slate-400 dark:text-slate-600 text-sm font-logo font-bold">
+            <footer class="text-slate-400 dark:text-slate-600 text-sm font-logo font-bold p-8">
               &copy; 2026 PlusThings
             </footer>
          </div>
@@ -626,7 +626,8 @@
         Play: '<polygon points="5 3 19 12 5 21 5 3"/>',
         Grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
         ExternalLink: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/>',
-        Share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>'
+        Share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>',
+        Book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
       };
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}">${paths[name] || ''}</svg>`;
     }
@@ -1624,10 +1625,14 @@
     function updateFab() {
       const fab = document.getElementById('btn-export-mobile');
       if (fab && !fab.querySelector('svg')) fab.insertAdjacentHTML('afterbegin', getIcon('Camera', 20));
+      
       const navDev = document.getElementById('mobile-nav-device');
       const navHelp = document.getElementById('mobile-nav-help');
       if (navDev && !navDev.querySelector('svg')) navDev.insertAdjacentHTML('afterbegin', getIcon('Smartphone', 24));
       if (navHelp && !navHelp.querySelector('svg')) navHelp.insertAdjacentHTML('afterbegin', getIcon('HelpCircle', 24));
+
+      const tutoFab = document.getElementById('btn-tuto-mobile');
+      if (tutoFab && !tutoFab.querySelector('svg')) tutoFab.insertAdjacentHTML('afterbegin', getIcon('Book', 20));
     }
 
     // Event Listeners
@@ -2009,22 +2014,31 @@
       
       const btnMob = document.getElementById('btn-export-mobile');
       const btnPc = document.getElementById('btn-footer-png');
-      const originalTextMob = btnMob ? btnMob.innerText : '';
-      const originalTextPc = btnPc ? btnPc.innerText : '';
       
-      if(btnMob) btnMob.innerText = '저장 중...';
-      if(btnPc) btnPc.innerText = '저장 중...';
+      // Feedback UI with preserved icon and styling
+      if(btnMob) btnMob.innerHTML = `${getIcon('Camera', 20)} <span class="font-bold text-sm">캡처중...</span>`;
+      if(btnPc) btnPc.innerText = '캡처중...';
 
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
       const cleanupFns = [];
 
       try {
-        // 1. Scroll top to render full page
+        // 1. Scroll top
         window.scrollTo(0, 0);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Render wait
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        // 2. Input Overlay (Fix for inputs not rendering text)
+        // 2. Disable heavy CSS (Backdrop Filter) for performance
+        const glassElements = document.querySelectorAll('.glass, .backdrop-blur-md, .backdrop-blur-sm');
+        glassElements.forEach(el => {
+           const original = el.style.backdropFilter;
+           el.style.backdropFilter = 'none';
+           cleanupFns.push(() => {
+              el.style.backdropFilter = original;
+           });
+        });
+
+        // 3. Input Overlay
         const inputs = document.querySelectorAll('input');
         inputs.forEach(el => {
           if(el.type === 'hidden' || el.style.display === 'none') return;
@@ -2035,7 +2049,6 @@
           span.textContent = el.value;
           const style = window.getComputedStyle(el);
           
-          // Copy styles
           Object.assign(span.style, {
              position: 'absolute', 
              left: (rect.left + window.scrollX) + 'px', 
@@ -2043,7 +2056,7 @@
              width: rect.width + 'px', 
              height: rect.height + 'px',
              zIndex: '9999', 
-             background: 'transparent', 
+             background: 'transparent', // Keep transparent to match input bg
              fontSize: style.fontSize, 
              fontWeight: style.fontWeight, 
              fontFamily: style.fontFamily,
@@ -2067,7 +2080,7 @@
           });
         });
 
-        // 3. Watermark
+        // 4. Watermark
         const watermark = document.createElement('div');
         watermark.innerText = 'ShoppingThings';
         Object.assign(watermark.style, {
@@ -2078,33 +2091,50 @@
         document.body.appendChild(watermark);
         cleanupFns.push(() => watermark.remove());
 
-        // 4. Capture
+        // 5. Capture
         const node = document.body;
+        // Explicitly clip to scrollHeight/Width to avoid capturing huge empty areas or getting cut off
         const width = node.scrollWidth;
         const height = node.scrollHeight;
         
-        // Detect Mobile
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        // Use toBlob for binary data (better for mobile memory)
-        const blob = await htmlToImage.toBlob(node, {
+        const isSamsung = /SamsungBrowser/i.test(navigator.userAgent);
+
+        // Samsung Internet Specific Config
+        const config = {
            width: width,
            height: height,
-           pixelRatio: isMobile ? 1 : 2, // Limit resolution on mobile
+           pixelRatio: (isMobile || isSamsung) ? 1 : 2,
            backgroundColor: state.theme === 'dark' ? '#0f172a' : '#f8fafc',
+           skipAutoScale: true, // Important for some mobile browsers
+           cacheBust: true, // Force reload images
            filter: (n) => {
               if (n.classList && (n.classList.contains('no-print-target') || n.classList.contains('no-print'))) return false;
               if (n.id === 'notif-stack' || n.id === 'notif-backdrop') return false;
               return true;
            }
-        });
+        };
 
-        if (!blob) throw new Error('Blob generation failed');
+        let blob;
+        
+        // Retry logic for Samsung Internet stability
+        try {
+            blob = await htmlToImage.toBlob(node, config);
+        } catch (e) {
+            console.warn('First attempt failed, retrying with lower quality...');
+            // Retry with simpler config
+            config.pixelRatio = 0.9; 
+            blob = await htmlToImage.toBlob(node, config);
+        }
+
+        if (!blob) throw new Error('이미지 생성 실패');
 
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `ShoppingThings_Checklist.png`;
+        // Add current date to filename
+        const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
+        link.download = `ShoppingThings_${dateStr}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -2113,15 +2143,14 @@
 
       } catch (err) {
         console.error(err);
-        alert('저장에 실패했습니다. 기기 메모리가 부족할 수 있습니다.');
+        alert('이미지 저장 중 오류가 발생했습니다.\n페이지를 새로고침 후 다시 시도해보세요.');
       } finally {
         cleanupFns.forEach(fn => fn());
         window.scrollTo(scrollX, scrollY);
-        if(btnMob) btnMob.innerHTML = `<span class="font-bold text-sm">PNG 저장</span>`;
-        if(btnPc) btnPc.innerText = 'PNG 저장';
         
-        // Re-inject icon for mobile button if needed
-        updateFab();
+        // Restore buttons text and structure
+        if(btnMob) btnMob.innerHTML = `${getIcon('Camera', 20)} <span class="font-bold text-sm">PNG 저장</span>`;
+        if(btnPc) btnPc.innerText = 'PNG 저장';
       }
     };
 
