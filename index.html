@@ -1051,7 +1051,7 @@
 
       container.innerHTML = `
         <div class="backdrop-blur-mdp-6">
-           <div class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-y-6 gap-x-2 justify-items-center">
+           <div class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-y-6 gap-x-1 justify-items-center">
              ${validAutomations.map(auto => {
                const related = auto.check(devices) || [];
                const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
