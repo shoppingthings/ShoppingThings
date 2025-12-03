@@ -1853,7 +1853,7 @@
 
         return `
           <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+            <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 border border-blue-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
               <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
             </div>
 
@@ -1925,7 +1925,7 @@
 
             const slimRowHtml = isSlim ? `
               <div class="md:hidden flex items-center gap-3 p-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full shadow-sm active:scale-95 transition-all cursor-pointer row-tracker" data-row-id="${row.__rid}" data-action="unslim-row" data-room="${rIdx}" data-row="${rowIdx}">
-                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 flex items-center justify-center shrink-0 border border-blue-100 dark:border-slate-600 overflow-hidden p-1">
+                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 border border-blue-100 dark:border-slate-600 flex items-center justify-center shrink-0 overflow-hidden p-1">
                    <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
                 </div>
                 <div class="flex-1 overflow-hidden min-w-0">
