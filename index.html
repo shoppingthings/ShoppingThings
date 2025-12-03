@@ -644,6 +644,40 @@
       '베개': 'pillow', '체온계': 'thermometer', '체중계': 'scale', '피트니스 매트': 'fitness_mat', '혈당측정기': 'glucometer', '혈압계': 'blood_pressure',
       '금고': 'safe', '리모컨/버튼': 'remote_button', '무선 충전기': 'wireless_charger', '반려동물 급식기': 'pet_feeder', '밸브': 'valve', '비데': 'bidet', '스프링클러': 'sprinkler', '온열매트': 'heating_mat', '자동차': 'car', '전기차 충전기': 'ev_charger', '차고 문': 'garage_door', '창문 개폐기': 'window_opener', '커튼/블라인드': 'curtain_blind', '홈 로봇': 'home_robot', '기타': 'other'
     };
+    // [신규] 기기 프로필 사전 (동의어 매핑)
+    const DEVICE_SYNONYM_DICTIONARY = {
+      // 조명 관련
+      '무드등': '조명', '라이트 스트립': '조명', '스트립 라이트': '조명', '간접조명': '조명', 
+      '벽부등': '조명', '스탠드': '조명', 'LED 전구': '전구', '다운라이트': '천장 조명',
+      
+      // 스위치 관련
+      '디밍 스위치': '스위치/조광기', '스마트 버튼': '스위치/조광기', '무선 스위치': '스위치/조광기',
+      
+      // 센서 관련
+      '도어 센서': '다목적 센서 (문열림 센서)', '창문 센서': '다목적 센서 (문열림 센서)', 
+      '문열림 센서': '다목적 센서 (문열림 센서)', '온습도계': '온도/습도 센서',
+      '재실 센서': '재실 감지 센서', '모션 센서': '동작감지센서', 'PIR 센서': '동작감지센서',
+      
+      // 전원 관련
+      '스마트 콘센트': '스마트 플러그', '멀티탭': '스마트 플러그',
+      
+      // 보안/카메라
+      '현관 카메라': '카메라', '홈 카메라': '카메라', 'CCTV': '카메라',
+      
+      // 가전
+      'TV': 'TV', '텔레비전': 'TV', '시스템 에어컨': '에어컨', '벽걸이 에어컨': '에어컨'
+    };
+
+    // [신규] 프로필 매칭 헬퍼 함수
+    function getProfileName(userInputName) {
+      if (!userInputName) return '';
+      // 1. 표준 이름이 그대로 들어온 경우
+      if (CAPABILITY_MAP.hasOwnProperty(userInputName)) return userInputName;
+      // 2. 사전에 등록된 동의어인 경우
+      if (DEVICE_SYNONYM_DICTIONARY[userInputName]) return DEVICE_SYNONYM_DICTIONARY[userInputName];
+      // 3. 매칭 실패 시 원본 반환 (아이콘은 other 처리됨)
+      return userInputName;
+    }
     const DEFAULT_PRESETS = [
       { name: '스마트 스피커', device: '스마트 스피커', protocol: 'Wi-Fi', qty: 1 },
       { name: '홈 엔터', device: '사운드바', protocol: 'Wi-Fi', qty: 1 },
@@ -881,8 +915,15 @@
 
     // --- PROGRESSIVE AUTOMATION SCORE ENGINE ---
     const AutomationAnalyzer = (() => {
-      const hasCap = (dev, cap) => (CAPABILITY_MAP[dev] || []).includes(cap);
-      const getDeviceList = (rooms) => rooms.flatMap((r, ri) => r.rows.map(row => ({ ...row, rIdx: ri, caps: CAPABILITY_MAP[row.device] || [] })));
+      // Helper to check capability based on Profile Name
+      const hasCap = (dev, cap) => (CAPABILITY_MAP[getProfileName(dev)] || []).includes(cap);
+      
+      // [수정] 기기 리스트 생성 시 getProfileName 적용하여 capability 매핑
+      const getDeviceList = (rooms) => rooms.flatMap((r, ri) => r.rows.map(row => ({ 
+          ...row, 
+          rIdx: ri, 
+          caps: CAPABILITY_MAP[getProfileName(row.device)] || [] 
+      })));
 
       function analyze(rooms) {
         let reasons = [];
@@ -907,6 +948,7 @@
         if (zigbeeDevs.length > 0 && !hubTypes.has('Zigbee')) {
           reasons.push({ code: 'ZIGBEE_NO_HUB', severity: 'critical', impact: -50, message: 'Zigbee 기기가 있지만 허브가 없습니다.', related: zigbeeDevs });
         }
+        // ... (나머지 로직 동일, hasCap 함수가 위에서 수정되었으므로 아래 로직들은 자동 적용됨)
         if (zwaveDevs.length > 0 && !hubTypes.has('Z-Wave')) {
           reasons.push({ code: 'ZWAVE_NO_HUB', severity: 'critical', impact: -50, message: 'Z-Wave 기기가 있지만 허브가 없습니다.', related: zwaveDevs });
         }
@@ -937,7 +979,7 @@
 
         const hubRooms = new Set();
         rooms.forEach((r, i) => {
-           if(r.rows.some(d => CAPABILITY_MAP[d.device]?.some(c => c.startsWith('hub')))) hubRooms.add(i);
+           if(r.rows.some(d => CAPABILITY_MAP[getProfileName(d.device)]?.some(c => c.startsWith('hub')))) hubRooms.add(i);
         });
         if(hubRooms.size > 0) reasons.push({ code: 'HUB_IN_SAME_ROOM', severity: 'minor', impact: 6, message: '허브가 기기와 같은 공간에 배치됨', related: [] });
 
@@ -945,6 +987,7 @@
             reasons.push({ code: 'MULTI_HUB_NETWORK', severity: 'major', impact: 10, message: '멀티 허브 네트워크 구성', related: [] });
         }
 
+        // Room Analysis using hasCap (which now uses getProfileName)
         const roomDevs = rooms.map((r, i) => ({ 
             idx: i, 
             name: r.name,
@@ -1030,7 +1073,209 @@
 
       return { analyze, computeScore };
     })();
+    
+    function renderWidgets() {
+      const counts = {};
+      state.rooms.forEach(r => r.rows.forEach(row => {
+        if(!row.device) return;
+        counts[row.device] = (counts[row.device] || 0) + (row.qty || 1);
+      }));
+      const keys = Object.keys(counts);
+      const container = document.getElementById('widgets-area');
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="text-slate-400 text-sm py-4 col-span-full">기기가 없습니다.</div>`;
+        return;
+      }
 
+      container.innerHTML = keys.map(key => {
+        // [수정] 사용자가 입력한 이름(key)에 대해 매칭되는 프로필 이름을 찾음
+        const profileName = getProfileName(key);
+        // [수정] 매칭된 이름으로 아이콘을 찾음
+        const filename = DEVICE_ICON_MAP[profileName] || 'other';
+        
+        const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
+        const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
+
+        return `
+          <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
+            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+              <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
+            </div>
+
+            <div class="flex-1 overflow-hidden min-w-0">
+              <div class="marquee">
+                <div class="marquee__inner">
+                  <span class="marquee-text inline-block text-sm font-bold text-slate-700 dark:text-slate-200">${escapeHtml(key)}</span>
+                  <span class="marquee-text inline-block text-sm font-bold text-slate-700 dark:text-slate-200" aria-hidden="true">${escapeHtml(key)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="font-bold text-brand-dark dark:text-brand-light text-sm pr-2 shrink-0">${counts[key]}</div>
+          </div>
+        `;
+      }).join('');
+      
+      initMarquees();
+    }
+    function renderRooms() {
+      const container = document.getElementById('rooms-area');
+      container.innerHTML = '';
+      state.rooms.forEach((room, rIdx) => {
+        const section = document.createElement('section');
+        section.className = "room-card bg-white/70 dark:bg-slate-900/50 backdrop-blur-md border border-white/40 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none rounded-[2rem] p-1 md:p-6 overflow-hidden relative";
+        section.dataset.roomIdx = rIdx;
+        
+        const headerHTML = `
+          <div class="flex items-center justify-between mb-6 px-4 pt-4 md:pt-0">
+            <input type="text" value="${room.name}" data-room="${rIdx}" data-field="room-name" class="room-name-input text-2xl font-black bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-white w-full max-w-md" placeholder="방 이름 입력" maxlength="20">
+            <div class="flex items-center gap-2">
+              <button data-action="add-row" data-room="${rIdx}" class="hidden md:flex bg-blue-50 dark:bg-brand/20 text-brand dark:text-brand-light hover:bg-brand hover:text-white px-3 py-1.5 rounded-full text-sm font-bold transition-all">+ 기기 추가</button>
+              <button data-action="room-more" data-room="${rIdx}" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400">${getIcon('MoreHorizontal', 20)}</button>
+            </div>
+          </div>`;
+        
+        if (room.rows.length === 0) {
+          // ... (Empty state HTML 유지) ...
+          section.innerHTML = headerHTML + `
+            <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 text-center mx-4 mb-4">
+              <div class="text-slate-400 dark:text-slate-500 font-medium">이 방에는 아직 기기가 없습니다.</div>
+              <div class="flex gap-3">
+                <button data-action="add-row" data-room="${rIdx}" class="px-4 py-2 bg-brand text-white rounded-full font-bold text-sm shadow-lg shadow-brand/20 hover:scale-105 transition-transform">기기 추가</button>
+                <button data-action="preset-modal" data-room="${rIdx}" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-full font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700">프리셋 추가</button>
+              </div>
+            </div>`;
+        } else {
+          let rowsHtml = '';
+          room.rows.forEach((row, rowIdx) => {
+            const isSlim = row.isSlim === true;
+            
+            // [수정] row.device가 동의어(예: 무드등)일 경우 표준 이름(예: 조명)으로 변환 후 아이콘 찾기
+            const profileName = getProfileName(row.device);
+            const filename = DEVICE_ICON_MAP[profileName] || 'other';
+            
+            const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
+            const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
+
+            // ... (나머지 HTML 생성 로직 유지) ...
+            const slimRowHtml = isSlim ? `
+              <div class="md:hidden flex items-center gap-3 p-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full shadow-sm active:scale-95 transition-all cursor-pointer row-tracker" data-row-id="${row.__rid}" data-action="unslim-row" data-room="${rIdx}" data-row="${rowIdx}">
+                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 flex items-center justify-center shrink-0 border border-blue-100 dark:border-slate-600 overflow-hidden p-1">
+                   <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
+                </div>
+                <div class="flex-1 overflow-hidden min-w-0">
+                   <div class="marquee">
+                      <div class="marquee__inner">
+                        <span class="marquee-text inline-block text-sm font-bold text-slate-800 dark:text-white mr-4">${escapeHtml(row.device || '기기 선택')}</span>
+                        <span class="marquee-text inline-block text-sm font-bold text-slate-800 dark:text-white" aria-hidden="true">${escapeHtml(row.device || '기기 선택')}</span>
+                      </div>
+                   </div>
+                   <div class="flex items-center gap-1 mt-0.5">
+                     <span class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 rounded font-medium truncate max-w-[140px]">${row.protocol || '-'}</span>
+                     <span class="text-[10px] text-slate-400 font-bold text-brand-light pr-2 shrink-0">x${row.qty}</span>
+                   </div>
+                </div>
+                <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand">${getIcon('MoreHorizontal', 18)}</button>
+              </div>
+            ` : '';
+
+            const inputDisplayClass = isSlim ? 'hidden md:table-row' : 'flex flex-col md:table-row';
+
+            rowsHtml += `
+              ${slimRowHtml}
+              <tr class="${inputDisplayClass} bg-white dark:bg-slate-800 md:bg-transparent border border-slate-100 dark:border-slate-800 md:border-b md:border-slate-100/50 dark:md:border-slate-700/50 rounded-3xl md:rounded-none shadow-sm md:shadow-none p-4 md:p-0 relative group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors row-tracker" data-row-id="${row.__rid}">
+                <td class="p-1 md:p-3 block md:table-cell relative">
+                  <span class="md:hidden text-xs font-bold text-slate-400 mb-1 block">디바이스</span>
+                  <input class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-brand-light focus:bg-white dark:focus:bg-slate-800 rounded-xl py-2.5 pr-10 pl-4 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all"
+                    value="${row.device}" placeholder="디바이스 이름" data-room="${rIdx}" data-row="${rowIdx}" data-field="device" data-ac-type="device">
+                  <div class="absolute right-2 top-[34px] md:top-[20px] z-10">
+                    <button data-action="device-modal" data-room="${rIdx}" data-row="${rowIdx}" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-brand">${getIcon('Plus', 16)}</button>
+                  </div>
+                </td>
+                <td class="p-1 md:p-3 block md:table-cell relative">
+                  <span class="md:hidden text-xs font-bold text-slate-400 mb-1 block">프로토콜</span>
+                  <input class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-brand-light focus:bg-white dark:focus:bg-slate-800 rounded-xl py-2.5 pr-10 pl-4 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all"
+                    value="${row.protocol}" placeholder="예: Zigbee" data-room="${rIdx}" data-row="${rowIdx}" data-field="protocol" data-ac-type="protocol">
+                </td>
+                
+                <td class="p-1 md:p-3 block md:table-cell">
+                  <div class="flex items-center justify-between md:justify-center gap-2 md:w-full">
+                    <span class="md:hidden text-xs font-bold text-slate-400">수량</span>
+                    <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1">
+                      <button data-action="qty-dec" data-room="${rIdx}" data-row="${rowIdx}" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-brand font-bold">-</button>
+                      <input type="number" value="${row.qty}" class="qty-input w-8 text-center bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none text-sm" data-room="${rIdx}" data-row="${rowIdx}">
+                      <button data-action="qty-inc" data-room="${rIdx}" data-row="${rowIdx}" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-brand font-bold">+</button>
+                    </div>
+                  </div>
+                </td>
+                
+                <td class="p-1 pt-4 md:hidden block">
+                   <button data-action="confirm-row" data-room="${rIdx}" data-row="${rowIdx}" class="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-slate-200 dark:shadow-none active:scale-95 transition-transform">
+                     ${getIcon('Check', 18)} 확인
+                   </button>
+                </td>
+
+                <td class="hidden md:table-cell p-1 md:p-3 text-center">
+                  <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
+                </td>
+                
+                <td class="md:hidden absolute top-2 right-2">
+                   <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
+                </td>
+              </tr>`;
+          });
+          section.innerHTML = headerHTML + `
+            <div class="overflow-x-auto md:overflow-visible p-3 space-y-1">
+              <table class="w-full text-left border-collapse">
+                <thead class="hidden md:table-header-group">
+                  <tr>
+                    <th class="p-3 text-xs text-slate-400 font-bold uppercase tracking-wider w-[45%]">디바이스</th>
+                    <th class="p-3 text-xs text-slate-400 font-bold uppercase tracking-wider w-[35%]">프로토콜</th>
+                    <th class="p-3 text-xs text-slate-400 font-bold uppercase tracking-wider w-[15%] text-center">수량</th>
+                    <th class="p-3 w-[5%]"></th>
+                  </tr>
+                </thead>
+                <tbody class="block md:table-row-group space-y-3 md:space-y-0 md:px-0 pb-3 md:pb-0">${rowsHtml}</tbody>
+              </table>
+            </div>
+            <div class="md:hidden px-4 pb-4 mt-3">
+              <button data-action="add-row" data-room="${rIdx}" class="w-full py-3 rounded-xl border-2 border-dashed border-brand/30 text-brand dark:text-brand-light font-bold bg-blue-50/50 dark:bg-brand/10 hover:bg-blue-50 dark:hover:bg-brand/20 flex items-center justify-center gap-2">${getIcon('Plus', 18)} 기기 추가</button>
+            </div>`;
+        }
+        container.appendChild(section);
+      });
+    }
+    
+    function showAutoDetail(id) {
+       const auto = AUTOMATION_RULES.find(a => a.id === id);
+       if(!auto) return;
+       
+       // [수정] Capability 체크를 위해 getProfileName 적용
+       const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => ({ 
+           ...row, 
+           rIdx: ri, 
+           caps: CAPABILITY_MAP[getProfileName(row.device)] || [] 
+       })));
+       
+       const related = auto.check(devices) || [];
+       const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
+
+       const html = `
+         <div class="p-6 text-center">
+            <div class="w-20 h-20 mx-auto rounded-full bg-blue-50 dark:bg-slate-800 flex items-center justify-center text-brand mb-4 shadow-inner">
+               ${getIcon(auto.icon, 40)}
+            </div>
+            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">${auto.name}</h3>
+            <p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">${auto.desc}</p>
+            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left">
+               <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">필요 기기 (충족됨)</div>
+               <div class="text-sm font-medium text-slate-800 dark:text-slate-200">${relatedNames}</div>
+            </div>
+         </div>
+       `;
+       openModal(html, '자동화 상세');
+    }
+    
     // --- MAP VIEW RENDERER ---
     function renderMapView() {
       const container = document.getElementById('map-view-area');
@@ -1077,7 +1322,25 @@
       const container = document.getElementById('automation-widgets-area');
       if(!container) return;
 
-      const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => ({ ...row, rIdx: ri, caps: CAPABILITY_MAP[row.device] || [] })));
+      // [핵심 수정] 기기 리스트를 만들 때 getProfileName을 거쳐서 Capability를 가져옵니다.
+      const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => {
+          // 1. 사용자 입력 이름에 대한 표준 프로필 이름 찾기 (예: 무드등 -> 조명)
+          const profileName = getProfileName(row.device);
+          
+          return { 
+              ...row, 
+              rIdx: ri, 
+              // 2. 표준 이름으로 Capability 조회 (그래야 '조명' 관련 자동화가 활성화됨)
+              caps: CAPABILITY_MAP[profileName] || [],
+              
+              // 3. (옵션) 텍스트 기반 규칙(예: '커튼' 포함 여부 확인)을 위해
+              // 표준 이름도 함께 검색될 수 있도록 보조 속성 추가 가능
+              // 단, 현재 구조상 caps만 잘 매핑되어도 대부분 해결됩니다.
+              _standardName: profileName
+          };
+      }));
+
+      // 체크 로직 수행
       const validAutomations = AUTOMATION_RULES.filter(rule => rule.check(devices) !== null);
 
       if (validAutomations.length === 0) {
@@ -1089,8 +1352,11 @@
         <div class="backdrop-blur-md p-3 md:p-6">
            <div class="flex flex-wrap gap-y-6 justify-start">
              ${validAutomations.map(auto => {
+               // 여기서도 devices 배열(위에서 caps가 수정된 버전)을 사용해 관련 기기 추출
                const related = auto.check(devices) || [];
+               // Tooltip에는 사용자가 입력한 원래 이름(row.device)이 표시됨
                const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
+               
                return `
                  <div class="w-1/4 md:w-[12.5%] lg:w-[10%] flex flex-col items-center gap-2 group cursor-pointer relative" onclick="showAutoDetail('${auto.id}')" data-tooltip-target="true">
                     <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-50 to-white dark:from-slate-800 dark:to-slate-700 shadow-md border border-slate-100 dark:border-slate-600 flex items-center justify-center text-brand group-hover:scale-110 group-hover:shadow-brand/20 group-hover:border-brand/50 transition-all">
@@ -1098,7 +1364,6 @@
                     </div>
                     <span class="text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300 text-center leading-tight max-w-[80px] break-keep">${auto.name}</span>
                     
-                    <!-- Tooltip -->
                     <div class="tooltip-box absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white text-xs rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
                        <div class="font-bold mb-1 text-brand-light">${auto.name}</div>
                        <div class="leading-relaxed text-slate-300">Triggered by:<br>${relatedNames}</div>
@@ -1847,13 +2112,17 @@
       }
 
       container.innerHTML = keys.map(key => {
-        const filename = DEVICE_ICON_MAP[key] || 'other';
+        // [수정] 사용자가 입력한 이름(key)에 대해 매칭되는 프로필 이름을 찾음
+        const profileName = getProfileName(key);
+        // [수정] 매칭된 이름으로 아이콘을 찾음
+        const filename = DEVICE_ICON_MAP[profileName] || 'other';
+        
         const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
         const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
 
         return `
           <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 border border-blue-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
               <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
             </div>
 
@@ -1871,7 +2140,6 @@
         `;
       }).join('');
       
-      // Calculate marquees using the new global function
       initMarquees();
     }
 
