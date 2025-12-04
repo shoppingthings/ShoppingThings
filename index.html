@@ -1118,6 +1118,7 @@
       
       initMarquees();
     }
+    
     function renderRooms() {
       const container = document.getElementById('rooms-area');
       container.innerHTML = '';
@@ -1136,7 +1137,6 @@
           </div>`;
         
         if (room.rows.length === 0) {
-          // ... (Empty state HTML 유지) ...
           section.innerHTML = headerHTML + `
             <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 text-center mx-4 mb-4">
               <div class="text-slate-400 dark:text-slate-500 font-medium">이 방에는 아직 기기가 없습니다.</div>
@@ -1150,17 +1150,16 @@
           room.rows.forEach((row, rowIdx) => {
             const isSlim = row.isSlim === true;
             
-            // [수정] row.device가 동의어(예: 무드등)일 경우 표준 이름(예: 조명)으로 변환 후 아이콘 찾기
+            // [수정 완료] 아이콘 결정 시 getProfileName을 먼저 호출하여 동의어(무드등 -> 조명)를 변환
             const profileName = getProfileName(row.device);
             const filename = DEVICE_ICON_MAP[profileName] || 'other';
             
             const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
             const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
 
-            // ... (나머지 HTML 생성 로직 유지) ...
             const slimRowHtml = isSlim ? `
               <div class="md:hidden flex items-center gap-3 p-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full shadow-sm active:scale-95 transition-all cursor-pointer row-tracker" data-row-id="${row.__rid}" data-action="unslim-row" data-room="${rIdx}" data-row="${rowIdx}">
-                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 flex items-center justify-center shrink-0 border border-blue-100 dark:border-slate-600 overflow-hidden p-1">
+                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 border border-blue-100 dark:border-slate-600 flex items-center justify-center shrink-0 overflow-hidden p-1">
                    <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
                 </div>
                 <div class="flex-1 overflow-hidden min-w-0">
@@ -1426,7 +1425,14 @@
     function showAutoDetail(id) {
        const auto = AUTOMATION_RULES.find(a => a.id === id);
        if(!auto) return;
-       const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => ({ ...row, rIdx: ri, caps: CAPABILITY_MAP[row.device] || [] })));
+       
+       // [수정됨] 상세 팝업에서도 getProfileName을 적용하여, '무드등' 입력 시 '조명'의 능력을(light) 인식하도록 수정
+       const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => ({ 
+           ...row, 
+           rIdx: ri, 
+           caps: CAPABILITY_MAP[getProfileName(row.device)] || [] 
+       })));
+       
        const related = auto.check(devices) || [];
        const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
 
@@ -1439,7 +1445,7 @@
             <p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">${auto.desc}</p>
             <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left">
                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">필요 기기 (충족됨)</div>
-               <div class="text-sm font-medium text-slate-800 dark:text-slate-200">${relatedNames}</div>
+               <div class="text-sm font-medium text-slate-800 dark:text-slate-200">${relatedNames || '<span class="text-slate-400">없음</span>'}</div>
             </div>
          </div>
        `;
