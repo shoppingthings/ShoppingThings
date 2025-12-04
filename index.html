@@ -1098,7 +1098,7 @@
 
         return `
           <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
+            <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 border border-blue-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
               <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
             </div>
 
@@ -1977,51 +1977,6 @@
       }
     }
     
-    function renderWidgets() {
-      const counts = {};
-      state.rooms.forEach(r => r.rows.forEach(row => {
-        if(!row.device) return;
-        counts[row.device] = (counts[row.device] || 0) + (row.qty || 1);
-      }));
-      const keys = Object.keys(counts);
-      const container = document.getElementById('widgets-area');
-      if (keys.length === 0) {
-        container.innerHTML = `<div class="text-slate-400 text-sm py-4 col-span-full">기기가 없습니다.</div>`;
-        return;
-      }
-
-      container.innerHTML = keys.map(key => {
-        // [수정] 사용자가 입력한 이름(key)에 대해 매칭되는 프로필 이름을 찾음
-        const profileName = getProfileName(key);
-        // [수정] 매칭된 이름으로 아이콘을 찾음
-        const filename = DEVICE_ICON_MAP[profileName] || 'other';
-        
-        const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
-        const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
-
-        return `
-          <div class="flex items-center gap-3 pl-2 pr-3 h-16 rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm border border-slate-100 dark:border-slate-700 shadow-sm min-w-0">
-            <div class="w-12 h-12 rounded-full bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center shrink-0 text-brand overflow-hidden p-1 text-lg">
-              <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
-            </div>
-
-            <div class="flex-1 overflow-hidden min-w-0">
-              <div class="marquee">
-                <div class="marquee__inner">
-                  <span class="marquee-text inline-block text-sm font-bold text-slate-700 dark:text-slate-200">${escapeHtml(key)}</span>
-                  <span class="marquee-text inline-block text-sm font-bold text-slate-700 dark:text-slate-200" aria-hidden="true">${escapeHtml(key)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="font-bold text-brand-dark dark:text-brand-light text-sm pr-2 shrink-0">${counts[key]}</div>
-          </div>
-        `;
-      }).join('');
-      
-      initMarquees();
-    }
-
     function escapeHtml (unsafe) {
       return unsafe.replace(/[&<"'>]/g, function(m) {
         switch (m) {
