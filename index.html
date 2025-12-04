@@ -1118,133 +1118,6 @@
       
       initMarquees();
     }
-    
-    function renderRooms() {
-      const container = document.getElementById('rooms-area');
-      container.innerHTML = '';
-      state.rooms.forEach((room, rIdx) => {
-        const section = document.createElement('section');
-        section.className = "room-card bg-white/70 dark:bg-slate-900/50 backdrop-blur-md border border-white/40 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none rounded-[2rem] p-1 md:p-6 overflow-hidden relative";
-        section.dataset.roomIdx = rIdx;
-        
-        const headerHTML = `
-          <div class="flex items-center justify-between mb-6 px-4 pt-4 md:pt-0">
-            <input type="text" value="${room.name}" data-room="${rIdx}" data-field="room-name" class="room-name-input text-2xl font-black bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-white w-full max-w-md" placeholder="방 이름 입력" maxlength="20">
-            <div class="flex items-center gap-2">
-              <button data-action="add-row" data-room="${rIdx}" class="hidden md:flex bg-blue-50 dark:bg-brand/20 text-brand dark:text-brand-light hover:bg-brand hover:text-white px-3 py-1.5 rounded-full text-sm font-bold transition-all">+ 기기 추가</button>
-              <button data-action="room-more" data-room="${rIdx}" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400">${getIcon('MoreHorizontal', 20)}</button>
-            </div>
-          </div>`;
-        
-        if (room.rows.length === 0) {
-          section.innerHTML = headerHTML + `
-            <div class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 text-center mx-4 mb-4">
-              <div class="text-slate-400 dark:text-slate-500 font-medium">이 방에는 아직 기기가 없습니다.</div>
-              <div class="flex gap-3">
-                <button data-action="add-row" data-room="${rIdx}" class="px-4 py-2 bg-brand text-white rounded-full font-bold text-sm shadow-lg shadow-brand/20 hover:scale-105 transition-transform">기기 추가</button>
-                <button data-action="preset-modal" data-room="${rIdx}" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-full font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700">프리셋 추가</button>
-              </div>
-            </div>`;
-        } else {
-          let rowsHtml = '';
-          room.rows.forEach((row, rowIdx) => {
-            const isSlim = row.isSlim === true;
-            
-            // [수정 완료] 아이콘 결정 시 getProfileName을 먼저 호출하여 동의어(무드등 -> 조명)를 변환
-            const profileName = getProfileName(row.device);
-            const filename = DEVICE_ICON_MAP[profileName] || 'other';
-            
-            const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
-            const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
-
-            const slimRowHtml = isSlim ? `
-              <div class="md:hidden flex items-center gap-3 p-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full shadow-sm active:scale-95 transition-all cursor-pointer row-tracker" data-row-id="${row.__rid}" data-action="unslim-row" data-room="${rIdx}" data-row="${rowIdx}">
-                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-700 border border-blue-100 dark:border-slate-600 flex items-center justify-center shrink-0 overflow-hidden p-1">
-                   <img src="${imgSrc}" onerror="this.src='${webpSrc}';this.onerror=()=>{this.parentElement.innerText='🔘'}" class="w-full h-full object-contain">
-                </div>
-                <div class="flex-1 overflow-hidden min-w-0">
-                   <div class="marquee">
-                      <div class="marquee__inner">
-                        <span class="marquee-text inline-block text-sm font-bold text-slate-800 dark:text-white mr-4">${escapeHtml(row.device || '기기 선택')}</span>
-                        <span class="marquee-text inline-block text-sm font-bold text-slate-800 dark:text-white" aria-hidden="true">${escapeHtml(row.device || '기기 선택')}</span>
-                      </div>
-                   </div>
-                   <div class="flex items-center gap-1 mt-0.5">
-                     <span class="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 rounded font-medium truncate max-w-[140px]">${row.protocol || '-'}</span>
-                     <span class="text-[10px] text-slate-400 font-bold text-brand-light pr-2 shrink-0">x${row.qty}</span>
-                   </div>
-                </div>
-                <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand">${getIcon('MoreHorizontal', 18)}</button>
-              </div>
-            ` : '';
-
-            const inputDisplayClass = isSlim ? 'hidden md:table-row' : 'flex flex-col md:table-row';
-
-            rowsHtml += `
-              ${slimRowHtml}
-              <tr class="${inputDisplayClass} bg-white dark:bg-slate-800 md:bg-transparent border border-slate-100 dark:border-slate-800 md:border-b md:border-slate-100/50 dark:md:border-slate-700/50 rounded-3xl md:rounded-none shadow-sm md:shadow-none p-4 md:p-0 relative group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors row-tracker" data-row-id="${row.__rid}">
-                <td class="p-1 md:p-3 block md:table-cell relative">
-                  <span class="md:hidden text-xs font-bold text-slate-400 mb-1 block">디바이스</span>
-                  <input class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-brand-light focus:bg-white dark:focus:bg-slate-800 rounded-xl py-2.5 pr-10 pl-4 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all"
-                    value="${row.device}" placeholder="디바이스 이름" data-room="${rIdx}" data-row="${rowIdx}" data-field="device" data-ac-type="device">
-                  <div class="absolute right-2 top-[34px] md:top-[20px] z-10">
-                    <button data-action="device-modal" data-room="${rIdx}" data-row="${rowIdx}" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-brand">${getIcon('Plus', 16)}</button>
-                  </div>
-                </td>
-                <td class="p-1 md:p-3 block md:table-cell relative">
-                  <span class="md:hidden text-xs font-bold text-slate-400 mb-1 block">프로토콜</span>
-                  <input class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-brand-light focus:bg-white dark:focus:bg-slate-800 rounded-xl py-2.5 pr-10 pl-4 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all"
-                    value="${row.protocol}" placeholder="예: Zigbee" data-room="${rIdx}" data-row="${rowIdx}" data-field="protocol" data-ac-type="protocol">
-                </td>
-                
-                <td class="p-1 md:p-3 block md:table-cell">
-                  <div class="flex items-center justify-between md:justify-center gap-2 md:w-full">
-                    <span class="md:hidden text-xs font-bold text-slate-400">수량</span>
-                    <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1">
-                      <button data-action="qty-dec" data-room="${rIdx}" data-row="${rowIdx}" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-brand font-bold">-</button>
-                      <input type="number" value="${row.qty}" class="qty-input w-8 text-center bg-transparent font-bold text-slate-800 dark:text-slate-200 outline-none text-sm" data-room="${rIdx}" data-row="${rowIdx}">
-                      <button data-action="qty-inc" data-room="${rIdx}" data-row="${rowIdx}" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-brand font-bold">+</button>
-                    </div>
-                  </div>
-                </td>
-                
-                <td class="p-1 pt-4 md:hidden block">
-                   <button data-action="confirm-row" data-room="${rIdx}" data-row="${rowIdx}" class="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-slate-200 dark:shadow-none active:scale-95 transition-transform">
-                     ${getIcon('Check', 18)} 확인
-                   </button>
-                </td>
-
-                <td class="hidden md:table-cell p-1 md:p-3 text-center">
-                  <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
-                </td>
-                
-                <td class="md:hidden absolute top-2 right-2">
-                   <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
-                </td>
-              </tr>`;
-          });
-          section.innerHTML = headerHTML + `
-            <div class="overflow-x-auto md:overflow-visible p-3 space-y-1">
-              <table class="w-full text-left border-collapse">
-                <thead class="hidden md:table-header-group">
-                  <tr>
-                    <th class="p-3 text-xs text-slate-400 font-bold uppercase tracking-wider w-[45%]">디바이스</th>
-                    <th class="p-3 text-xs text-slate-400 font-bold uppercase tracking-wider w-[35%]">프로토콜</th>
-                    <th class="p-3 text-xs text-slate-400 font-bold uppercase tracking-wider w-[15%] text-center">수량</th>
-                    <th class="p-3 w-[5%]"></th>
-                  </tr>
-                </thead>
-                <tbody class="block md:table-row-group space-y-3 md:space-y-0 md:px-0 pb-3 md:pb-0">${rowsHtml}</tbody>
-              </table>
-            </div>
-            <div class="md:hidden px-4 pb-4 mt-3">
-              <button data-action="add-row" data-room="${rIdx}" class="w-full py-3 rounded-xl border-2 border-dashed border-brand/30 text-brand dark:text-brand-light font-bold bg-blue-50/50 dark:bg-brand/10 hover:bg-blue-50 dark:hover:bg-brand/20 flex items-center justify-center gap-2">${getIcon('Plus', 18)} 기기 추가</button>
-            </div>`;
-        }
-        container.appendChild(section);
-      });
-    }
-    
     function showAutoDetail(id) {
        const auto = AUTOMATION_RULES.find(a => a.id === id);
        if(!auto) return;
@@ -2193,7 +2066,10 @@
           room.rows.forEach((row, rowIdx) => {
             const isSlim = row.isSlim === true;
             
-            const filename = DEVICE_ICON_MAP[row.device] || 'other';
+            // [수정됨] 사용자가 입력한 동의어(예: 무드등)를 표준 프로필 이름(예: 조명)으로 변환하여 아이콘을 찾습니다.
+            const profileName = getProfileName(row.device);
+            const filename = DEVICE_ICON_MAP[profileName] || 'other';
+            
             const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
             const webpSrc = `images/icons/deviceprofiles/${filename}.webp`;
 
