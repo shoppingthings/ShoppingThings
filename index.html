@@ -734,7 +734,9 @@
         Fan: '<path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/>',
         Door: '<path d="M4 22h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2Z"/><path d="M16 12h.01"/>',
         Flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.2.5-3.3.3-1.12.5-1.68 1-2.5 0 0 1.5-1 2-2.5 0 2.5.5 5.5 1.5 8.25Z"/>',
-        Home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'
+        Home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+        Car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17h2"/><path d="M15 17h2"/>',
+        Globe: '<circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'
       };
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}">${paths[name] || ''}</svg>`;
     }
@@ -1831,7 +1833,9 @@
       
       const filters = [
          { id: 'all', label: '전체' }, { id: 'phone', label: '폰' }, { id: 'tab', label: '탭' },
-         { id: 'watch', label: '워치' }, { id: 'pc', label: 'PC' }, { id: 'tv', label: 'TV' }, { id: 'car', label: '자동차' }
+         { id: 'watch', label: '워치' }, { id: 'pc', label: 'PC' }, { id: 'tv', label: 'TV' },
+         { id: 'web', label: '웹' },
+         { id: 'car', label: '자동차' }
       ];
       
       tabsContainer.innerHTML = filters.map(f => `
@@ -1846,7 +1850,11 @@
         { name: 'App Store', tags: ['phone', 'tab', 'watch'], url: 'https://apps.apple.com/kr/app/samsung-smartthings/id1222822904', color: 'bg-blue-500', icon: 'Box', logo: 'appstore.png' },
         { name: 'Microsoft Store', tags: ['pc'], url: 'https://apps.microsoft.com/detail/9n3zbh5v7hx6?hl=ko-KR&gl=KR', color: 'bg-blue-600', icon: 'Grid', logo: 'microsoft.png' },
         { name: 'Samsung TV', tags: ['tv'], url: 'https://www.samsungsvc.co.kr/solution/2395698?assess=N', color: 'bg-indigo-900', icon: 'Grid', logo: 'samsung.png' },
-        { name: 'Pleos', tags: ['car'], url: 'https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%ED%98%84%EB%8C%80%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B7%B8%EB%A3%B9%EA%B3%BC-%EC%86%90%EC%9E%A1%EA%B3%A0-%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%99%88-%EC%BB%A4%EB%84%A5', color: 'bg-slate-700', icon: 'Play', logo: 'pleos.png' }
+        { name: 'My SmartThings', tags: ['web'], url: 'https://my.smartthings.com/advanced', color: 'bg-indigo-600', icon: 'Monitor', logo: 'st_web.png' },
+        { name: 'SmartThings Pro', tags: ['web'], url: 'https://www.smartthingspro.ai/', color: 'bg-indigo-600', icon: 'Monitor', logo: 'st_web.png' },
+        { name: 'Pleos', tags: ['car'], url: 'https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%ED%98%84%EB%8C%80%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B7%B8%EB%A3%B9%EA%B3%BC-%EC%86%90%EC%9E%A1%EA%B3%A0-%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%99%88-%EC%BB%A4%EB%84%A5', color: 'bg-slate-700', icon: 'Play', logo: 'pleos.png' },
+        { name: 'CCNC (현대, 기아)', tags: ['car'], url: 'https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%ED%98%84%EB%8C%80%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B7%B8%EB%A3%B9%EA%B3%BC-%EC%86%90%EC%9E%A1%EA%B3%A0-%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%99%88-%EC%BB%A4%EB%84%A5', color: 'bg-blue-800', icon: 'Car', logo: 'hyundai.png' },
+        { name: 'CCIC (제네시스)', tags: ['car'], url: 'https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-%ED%98%84%EB%8C%80%EC%9E%90%EB%8F%99%EC%B0%A8%EA%B7%B8%EB%A3%B9%EA%B3%BC-%EC%86%90%EC%9E%A1%EA%B3%A0-%EC%8A%A4%EB%A7%88%ED%8A%B8%ED%99%88-%EC%BB%A4%EB%84%A5', color: 'bg-black', icon: 'Car', logo: 'genesis.png' }
       ];
       
       const filteredLinks = filter === 'all' ? APP_LINKS : APP_LINKS.filter(l => l.tags.includes(filter));
@@ -1866,7 +1874,7 @@
                ${link.tags.map(t => `<span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">${t}</span>`).join('')}
             </div>
             <div class="flex items-center text-sm font-bold text-slate-500 group-hover:text-brand transition-colors mt-4">
-               설치하기 ${getIcon('ExternalLink', 14, 'ml-2')}
+               바로가기 ${getIcon('ExternalLink', 14, 'ml-2')}
             </div>
           </div>
         </a>
@@ -2405,6 +2413,9 @@
         // 속도가 거의 0이면 정지
         if (Math.abs(velX) < 0.5) {
           cancelAnimationFrame(momentumID);
+          // 관성 종료 후 스냅 복구 (Glide)
+          ele.style.scrollBehavior = 'smooth';
+          ele.style.scrollSnapType = 'x proximity';
           return;
         }
 
@@ -2415,6 +2426,8 @@
         if (ele.scrollLeft <= 0 || ele.scrollLeft >= ele.scrollWidth - ele.clientWidth) {
           velX = 0;
           cancelAnimationFrame(momentumID);
+          ele.style.scrollBehavior = 'smooth';
+          ele.style.scrollSnapType = 'x proximity';
           return;
         }
 
@@ -2432,8 +2445,10 @@
         ele.style.cursor = 'grabbing';
         ele.classList.add('st-dragging');
 
-        // 기존 관성 멈춤
+        // 기존 관성 멈춤 & 스냅 해제 (즉각 반응)
         cancelAnimationFrame(momentumID);
+        ele.style.scrollBehavior = 'auto';
+        ele.style.scrollSnapType = 'none';
 
         // 초기값 설정
         const pageX = getPageX(e);
@@ -2445,7 +2460,8 @@
         lastTime = performance.now();
         velX = 0;
 
-        // 이미지나 텍스트 드래그 방지
+        // 이미지나 텍스트 드래그 방지 (PC에서 링크 선택 방지)
+        // [중요] 링크/이미지 드래그 시 브라우저 기본 동작 막음 -> 스크롤 우선
         if (!e.touches) {
           e.preventDefault(); 
         }
@@ -2503,6 +2519,10 @@
             window.removeEventListener('click', preventClick, true);
           };
           window.addEventListener('click', preventClick, true);
+        } else {
+          // 드래그 아니면 바로 스냅 복구
+          ele.style.scrollBehavior = 'smooth';
+          ele.style.scrollSnapType = 'x proximity';
         }
       };
 
@@ -2520,6 +2540,9 @@
           ele.scrollLeft += e.deltaY;
         }
       };
+
+      // 드래그 시작 시점의 기본 동작(이미지 드래그 등) 방지
+      ele.addEventListener('dragstart', (e) => e.preventDefault());
 
       // 이벤트 리스너 등록
       ele.addEventListener('mousedown', onDown);
