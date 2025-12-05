@@ -753,7 +753,7 @@
         }
       },
       {
-        id: 'sleep_light', name: '수등 자동화', icon: 'Moon',
+        id: 'sleep_light', name: '수면등 자동화', icon: 'Moon',
         desc: '취침 시간에 맞춰 수면에 방해되지 않는 은은한 조명으로 자동 전환합니다.',
         check: (devs) => {
            const lights = devs.filter(d => d.caps.includes('light'));
@@ -761,7 +761,7 @@
         }
       },
       {
-        id: 'bulk_off', name: '일괄소등 자동', icon: 'LogOut',
+        id: 'bulk_off', name: '일괄소등 자동화', icon: 'LogOut',
         desc: '외출 시 버튼 하나로 집안의 모든 조명을 한 번에 끕니다.',
         check: (devs) => {
            const switches = devs.filter(d => d.caps.includes('switch'));
@@ -795,7 +795,7 @@
         }
       },
       {
-        id: 'curtain_auto', name: '커튼/블라인드', icon: 'Columns',
+        id: 'curtain_auto', name: '커튼/블라인드 자동화', icon: 'Columns',
         desc: '일출/일몰 시간이나 기상 시간에 맞춰 커튼을 자동으로 여닫습니다.',
         check: (devs) => {
            const curtains = devs.filter(d => d.device.includes('커튼') || d.device.includes('블라인드'));
