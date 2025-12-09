@@ -843,10 +843,54 @@
       return userInputName;
     }
     const DEFAULT_PRESETS = [
-      { name: '스마트 스피커', device: '스마트 스피커', protocol: 'Wi-Fi', qty: 1 },
-      { name: '홈 엔터', device: '사운드바', protocol: 'Wi-Fi', qty: 1 },
-      { name: '조명 제어', device: '전구', protocol: 'Zigbee', qty: 2 },
-      { name: '보안 기본', device: '문열림 센서', protocol: 'Zigbee', qty: 1 }
+      { 
+        name: '필립스 휴 입문 세트', 
+        device: '필립스 휴 화이트 앰비언스', 
+        protocol: 'Zigbee', 
+        qty: 3 
+      },
+      { 
+        name: '국민 조합: 아카라 센서', 
+        device: '아카라 도어 센서 T1', 
+        protocol: 'Zigbee', 
+        qty: 2 
+      },
+      { 
+        name: '전기 절약: 다원 플러그', 
+        device: '다원 파워매니저 스마트 플러그', 
+        protocol: 'Zigbee', 
+        qty: 4 
+      },
+      { 
+        name: '재실 감지 끝판왕', 
+        device: '아카라 FP2', 
+        protocol: 'Wi-Fi', 
+        qty: 1 
+      },
+      { 
+        name: '자동 커튼 (아카라)', 
+        device: '아카라 커튼 컨트롤러 E1', 
+        protocol: 'Zigbee', 
+        qty: 1 
+      },
+      { 
+        name: '스싱 스테이션 허브', 
+        device: '스마트싱스 스테이션', 
+        protocol: 'Matter over Thread', 
+        qty: 1 
+      },
+      { 
+        name: '삼성 가전: 무풍 에어컨', 
+        device: '비스포크 무풍에어컨', 
+        protocol: 'Wi-Fi', 
+        qty: 1 
+      },
+      { 
+        name: '보안: 홈 카메라', 
+        device: 'Tapo 홈 카메라', 
+        protocol: 'Wi-Fi', 
+        qty: 1 
+      }
     ];
     const PROTOCOLS = ['Zigbee', 'Z-Wave', 'Matter over Wi-Fi', 'Matter over Thread', 'Wi-Fi', 'Bluetooth', 'Thread', 'Galaxy Find Network'];
 
