@@ -635,6 +635,7 @@
       '베개': 'pillow', '체온계': 'thermometer', '체중계': 'scale', '피트니스 매트': 'fitness_mat', '혈당측정기': 'glucometer', '혈압계': 'blood_pressure',
       '금고': 'safe', '리모컨/버튼': 'remote_button', '무선 충전기': 'wireless_charger', '반려동물 급식기': 'pet_feeder', '밸브': 'valve', '비데': 'bidet', '스프링클러': 'sprinkler', '온열매트': 'heating_mat', '자동차': 'car', '전기차 충전기': 'ev_charger', '차고 문': 'garage_door', '창문 개폐기': 'window_opener', '커튼/블라인드': 'curtain_blind', '홈 로봇': 'home_robot', '기타': 'other'
     };
+    
     // [신규] 기기 프로필 사전 (동의어 매핑)
     const DEVICE_SYNONYM_DICTIONARY = {
       // 조명
@@ -889,85 +890,91 @@
         name: '고성능 스마트홈 짓기', 
         device: '스마트싱스 허브 V4', 
         protocol: 'Zigbee', 
-        qty: 1 
+        qty: 2 
       },
       { 
-        name: '스마트홈에 Z-Wave 한 스푼 더하기', 
+        name: '스마트홈에 Z-Wave 한 스푼', 
         device: '스마트싱스 허브 V3', 
         protocol: 'Z-Wave', 
-        qty: 1 
+        qty: 3 
       },
       { 
         name: '색 온도를 바꾸는 전구', 
         device: '필립스 휴 화이트 앰비언스', 
         protocol: 'Zigbee', 
-        qty: 3 
+        qty: 4 
       },
       { 
         name: '라이트스트립', 
         device: '필립스 휴 그라디언트', 
         protocol: 'Zigbee', 
-        qty: 3 
+        qty: 5
       },
       { 
         name: '만능 문열림 센서', 
         device: '스마트싱스 문열림 센서', 
         protocol: 'Zigbee', 
-        qty: 2 
+        qty: 6
       },
       { 
         name: '작은 문열림 센서', 
         device: '아카라 도어 센서 T1', 
         protocol: 'Zigbee', 
-        qty: 2 
+        qty: 7
       },
       { 
         name: '플러그로 일반 제품을 IoT화 하기', 
         device: '다원 지그비 플러그 16A SmartThings', 
         protocol: 'Zigbee', 
-        qty: 4 
+        qty: 8
       },
       { 
         name: '들어가면 자동으로 불 켜기', 
         device: '시하스 재실 카운터 센서', 
         protocol: 'Zigbee', 
-        qty: 1 
+        qty: 9
       },
       { 
         name: '재실 감지하기', 
         device: '아카라 FP2', 
         protocol: 'Wi-Fi', 
-        qty: 1 
+        qty: 10
       },
       { 
         name: '자동 커튼 (아카라)', 
         device: '아카라 커튼 컨트롤러 E1', 
         protocol: 'Zigbee', 
-        qty: 1 
+        qty: 11
+      },
+      { 
+        name: '자동 커튼 (마마바)', 
+        device: '마마바 매터 전동모터', 
+        protocol: 'Zigbee', 
+        qty: 12
       },
       { 
         name: '여름철 공기조화 에어컨', 
         device: '비스포크 무풍에어컨', 
         protocol: 'Wi-Fi', 
-        qty: 1 
+        qty: 13 
       },
       { 
         name: '빨간약', 
         device: '삼성 에어모니터 플러스', 
         protocol: 'Wi-Fi', 
-        qty: 1 
+        qty: 14 
       },
       { 
         name: '집 안의 보안 관리', 
         device: '스마트싱스용 홈카메라360', 
         protocol: 'Wi-Fi', 
-        qty: 1 
-      }
+        qty: 15
+      },
       { 
         name: '짚 앞의 택배와 보안 관리', 
         device: '삼성 AI 도어캠', 
         protocol: 'Wi-Fi', 
-        qty: 1 
+        qty: 16
       }
     ];
     const PROTOCOLS = ['Zigbee', 'Z-Wave', 'Matter over Wi-Fi', 'Matter over Thread', 'Wi-Fi', 'Bluetooth', 'Thread', 'Galaxy Find Network'];
