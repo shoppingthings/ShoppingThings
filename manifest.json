@@ -1,6 +1,6 @@
 {
-  "name": "ShoppingThings IoT Checklist",
-  "short_name": "ShoppingThings",
+  "name": "ShoppingThings",
+  "short_name": "ㅁShoppingThings",
   "description": "스마트홈 IoT 쇼핑리스트와 기기 호환성, 자동화 점수를 분석해주는 체크리스트입니다.",
   "start_url": "./index.html",
   "display": "standalone",
