@@ -7,6 +7,7 @@ const urlsToCache = [
   '/service-worker.js',
   // --- 아이콘 파일 (manifest 및 html에 명시된 모든 파일) ---
   'images/icons/general/logo_shoppingthings_512h.png',
+  'images/icons/general/logo_shoppingthings_192h.png',
   'images/icons/general/symbol_shoppingthings_512h.ico',
   'images/icons/general/symbol_shoppingthings_512h.png',
 
