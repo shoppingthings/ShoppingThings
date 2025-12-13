@@ -3014,7 +3014,7 @@
         <button id="act-reset" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-medium text-left">${getIcon('RotateCcw', 16)} 초기화</button>
         <button id="act-theme" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-medium text-left">${getIcon('Moon', 16)} ${state.theme === 'dark' ? '라이트 모드' : '다크 모드'}</button>`;
       openPopover(anchor, html);
-      document.getElementById('act-reset').onclick = () => { if(confirm('초기화?')) { localStorage.clear(); location.reload(); } };
+      document.getElementById('act-reset').onclick = () => { if(confirm('방 표의 모든 기기들이 날라갑니다. 리셋을 하면 다시 되돌릴 수 없으니 이미지로 저장 버튼을 눌러서 사진으로 저장하세요.\n\n싹 비우고 새로 시작할까요? ')) { localStorage.clear(); location.reload(); } };
       document.getElementById('act-theme').onclick = () => {
         state.theme = state.theme === 'light' ? 'dark' : 'light';
         saveTheme(state.theme); applyTheme();
