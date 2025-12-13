@@ -330,7 +330,7 @@
     <!-- Row 1 -->
     <div class="flex items-center justify-between px-4 h-16 w-full max-w-7xl mx-auto">
       <div class="flex items-center gap-3">
-        <button id="btn-sidebar-toggle" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg hidden md:flex text-slate-500 dark:text-slate-400 transition-colors"></button>
+        <button id="btn-sidebar-toggle" aria-label="사이드바 메뉴" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg hidden md:flex text-slate-500 dark:text-slate-400 transition-colors"></button>
         <div class="w-10 h-10 flex items-center justify-center overflow-hidden">
           <img src="images/icons/general/logo_shoppingthings_512h.png" alt="ShoppingThings" class="w-full h-full object-cover" onerror="this.style.display='none';this.parentElement.innerText='ST'">
         </div>
@@ -349,7 +349,7 @@
              <span class="nudge-dot"></span>
           </button>
           <div class="relative">
-            <button id="btn-gnb-more" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors"></button>
+            <button id="btn-gnb-more" aria-label="더보기" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors"></button>
           </div>
         </div>
       </div>
@@ -2389,7 +2389,7 @@
             <input type="text" value="${room.name}" data-room="${rIdx}" data-field="room-name" class="room-name-input text-2xl font-black bg-transparent border-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600 text-slate-800 dark:text-white w-full max-w-md" placeholder="방 이름 입력" maxlength="20">
             <div class="flex items-center gap-2">
               <button data-action="add-row" data-room="${rIdx}" class="hidden md:flex bg-blue-50 dark:bg-brand/20 text-brand dark:text-brand-light hover:bg-brand hover:text-white px-3 py-1.5 rounded-full text-sm font-bold transition-all">+ 기기 추가</button>
-              <button data-action="room-more" data-room="${rIdx}" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400">${getIcon('MoreHorizontal', 20)}</button>
+              <button data-action="room-more" data-room="${rIdx}" aria-label="방 설정" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400">${getIcon('MoreHorizontal', 20)}</button>
             </div>
           </div>`;
         
@@ -2445,7 +2445,7 @@
                   <input class="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-brand-light focus:bg-white dark:focus:bg-slate-800 rounded-xl py-2.5 pr-10 pl-4 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none transition-all"
                     value="${row.device}" placeholder="디바이스 이름" data-room="${rIdx}" data-row="${rowIdx}" data-field="device" data-ac-type="device">
                   <div class="absolute right-2 top-[34px] md:top-[20px] z-10">
-                    <button data-action="device-modal" data-room="${rIdx}" data-row="${rowIdx}" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-brand">${getIcon('Plus', 16)}</button>
+                    <button data-action="device-modal" data-room="${rIdx}" data-row="${rowIdx}" aria-label="기기 추가" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-brand">${getIcon('Plus', 16)}</button>
                   </div>
                 </td>
                 <td class="p-1 md:p-3 block md:table-cell relative">
@@ -2472,11 +2472,11 @@
                 </td>
 
                 <td class="hidden md:table-cell p-1 md:p-3 text-center">
-                  <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
+                  <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" aria-label="기기 옵션" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
                 </td>
                 
                 <td class="md:hidden absolute top-2 right-2">
-                   <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
+                   <button data-action="row-more" data-room="${rIdx}" data-row-id="${row.__rid}" aria-label="기기 옵션" class="p-2 text-slate-400 hover:text-brand hover:bg-blue-50 dark:hover:bg-slate-700 rounded-full transition-colors">${getIcon('MoreHorizontal', 18)}</button>
                 </td>
               </tr>`;
           });
