@@ -1153,16 +1153,17 @@
         }
       }
     ];
-
+    
     // --- PROGRESSIVE AUTOMATION SCORE ENGINE ---
     const AutomationAnalyzer = (() => {
       // Helper to check capability based on Profile Name
+      // [수정] hasCap 안전성 강화
       const hasCap = (dev, cap) => (CAPABILITY_MAP[getProfileName(dev)] || []).includes(cap);
       
-      // [수정] 기기 리스트 생성 시 getProfileName 적용하여 capability 매핑
       const getDeviceList = (rooms) => rooms.flatMap((r, ri) => r.rows.map(row => ({ 
           ...row, 
           rIdx: ri, 
+          // [수정] caps가 반드시 배열이 되도록 보장
           caps: CAPABILITY_MAP[getProfileName(row.device)] || [] 
       })));
 
@@ -1175,12 +1176,15 @@
           if (d.caps.includes('hub_zigbee')) hubTypes.add('Zigbee');
           if (d.caps.includes('hub_thread')) hubTypes.add('Thread');
           if (d.caps.includes('hub_zwave')) hubTypes.add('Z-Wave');
-          if (d.protocol && (d.protocol.toLowerCase().includes('wi-fi') || d.protocol.toLowerCase().includes('matter'))) hubTypes.add('Wi-Fi');
+          // [수정] protocol이 undefined일 경우 대비 (toLowerCase 충돌 방지)
+          const proto = (d.protocol || '').toLowerCase();
+          if (proto.includes('wi-fi') || proto.includes('matter')) hubTypes.add('Wi-Fi');
         });
 
-        const zigbeeDevs = devices.filter(d => d.protocol && d.protocol.toLowerCase().includes('zigbee'));
-        const zwaveDevs = devices.filter(d => d.protocol && d.protocol.toLowerCase().includes('z-wave'));
-        const threadDevs = devices.filter(d => d.protocol && d.protocol.toLowerCase().includes('thread'));
+        // [수정] protocol 안전 접근
+        const zigbeeDevs = devices.filter(d => (d.protocol || '').toLowerCase().includes('zigbee'));
+        const zwaveDevs = devices.filter(d => (d.protocol || '').toLowerCase().includes('z-wave'));
+        const threadDevs = devices.filter(d => (d.protocol || '').toLowerCase().includes('thread'));
         
         let baseScore = 20;
         if (hubTypes.size >= 1) baseScore = 50;
@@ -1189,7 +1193,6 @@
         if (zigbeeDevs.length > 0 && !hubTypes.has('Zigbee')) {
           reasons.push({ code: 'ZIGBEE_NO_HUB', severity: 'critical', impact: -50, message: 'Zigbee 기기가 있지만 허브가 없습니다.', related: zigbeeDevs });
         }
-        // ... (나머지 로직 동일, hasCap 함수가 위에서 수정되었으므로 아래 로직들은 자동 적용됨)
         if (zwaveDevs.length > 0 && !hubTypes.has('Z-Wave')) {
           reasons.push({ code: 'ZWAVE_NO_HUB', severity: 'critical', impact: -50, message: 'Z-Wave 기기가 있지만 허브가 없습니다.', related: zwaveDevs });
         }
@@ -1220,7 +1223,12 @@
 
         const hubRooms = new Set();
         rooms.forEach((r, i) => {
-           if(r.rows.some(d => CAPABILITY_MAP[getProfileName(d.device)]?.some(c => c.startsWith('hub')))) hubRooms.add(i);
+           // [수정] Optional Chaining 호환성 문제 및 undefined 방지 로직 강화
+           const hasHubInRoom = r.rows.some(d => {
+               const caps = CAPABILITY_MAP[getProfileName(d.device)] || [];
+               return caps.some(c => c.startsWith('hub'));
+           });
+           if(hasHubInRoom) hubRooms.add(i);
         });
         if(hubRooms.size > 0) reasons.push({ code: 'HUB_IN_SAME_ROOM', severity: 'minor', impact: 6, message: '허브가 기기와 같은 공간에 배치됨', related: [] });
 
@@ -1228,7 +1236,7 @@
             reasons.push({ code: 'MULTI_HUB_NETWORK', severity: 'major', impact: 10, message: '멀티 허브 네트워크 구성', related: [] });
         }
 
-        // Room Analysis using hasCap (which now uses getProfileName)
+        // Room Analysis using hasCap
         const roomDevs = rooms.map((r, i) => ({ 
             idx: i, 
             name: r.name,
@@ -1294,7 +1302,8 @@
             reasons.push({ code: 'COVERAGE_BONUS', severity: 'major', impact: 10, message: '핵심 3개 이상 영역 커버', related: [] });
         }
 
-        if (devices.length > 0 && devices.every(d => !d.protocol || d.protocol.includes('Wi-Fi')) && zigbeeDevs.length === 0 && zwaveDevs.length === 0 && threadDevs.length === 0) {
+        // [수정] protocol undefined 방지
+        if (devices.length > 0 && devices.every(d => !(d.protocol) || d.protocol.includes('Wi-Fi')) && zigbeeDevs.length === 0 && zwaveDevs.length === 0 && threadDevs.length === 0) {
            reasons.push({ code: 'WIFI_ONLY_OK', severity: 'info', impact: 4, message: 'Wi-Fi 전용 구성', related: [] });
         }
         
@@ -1626,7 +1635,7 @@
         renderBell();
         renderStack();
       }
-
+      
       function renderStack() {
         const stack = getEl('notif-stack');
         const backdrop = getEl('notif-backdrop');
@@ -1641,9 +1650,12 @@
         stack.classList.add('open');
         backdrop.classList.add('active');
         
-        const sorted = [...currentReasons].sort((a,b) => {
+        // currentReasons가 없거나 배열이 아닌 경우 대비
+        const reasons = Array.isArray(currentReasons) ? currentReasons : [];
+
+        const sorted = [...reasons].sort((a,b) => {
           const map = { critical: 4, major: 3, minor: 2, info: 1 };
-          return map[b.severity] - map[a.severity];
+          return (map[b.severity] || 0) - (map[a.severity] || 0); // map lookup 안전 처리
         });
 
         if (sorted.length === 0) {
@@ -1667,7 +1679,8 @@
                 </div>
               </div>
             </div>`;
-           getEl('stack-expand-btn').onclick = () => { isExpanded = true; renderStack(); };
+           const btn = getEl('stack-expand-btn');
+           if(btn) btn.onclick = () => { isExpanded = true; renderStack(); };
         } 
         else {
            stack.classList.remove('folded');
@@ -1692,19 +1705,23 @@
                     ${r.impact > 0 ? '+' : ''}${r.impact}
                   </div>
                 </div>
-                ${r.related && r.related.length ? `<div class="text-[10px] text-slate-400 mt-1 truncate">관련: ${r.related.map(d=>d.caps.includes('hub') ? '허브' : d.device).join(', ')}</div>` : ''}
+                ${r.related && r.related.length ? `<div class="text-[10px] text-slate-400 mt-1 truncate">관련: ${r.related.map(d=> (d.caps || []).includes('hub') ? '허브' : d.device).join(', ')}</div>` : ''}
               </div>
             </div>
            `).join('');
            html += `<button id="btn-show-logic" class="text-[10px] text-center w-full py-2 underline text-slate-400 hover:text-brand">점수 산출 원리 보기</button></div></div>`;
            stack.innerHTML = html;
            
-           getEl('stack-fold').onclick = () => { isExpanded = false; renderStack(); };
-           getEl('stack-close').onclick = closeNotif;
-           getEl('btn-show-logic').onclick = ScoreUI.openLogicModal;
+           const foldBtn = getEl('stack-fold');
+           const closeBtn = getEl('stack-close');
+           const logicBtn = getEl('btn-show-logic');
+
+           if(foldBtn) foldBtn.onclick = () => { isExpanded = false; renderStack(); };
+           if(closeBtn) closeBtn.onclick = closeNotif;
+           if(logicBtn) logicBtn.onclick = ScoreUI.openLogicModal;
         }
       }
-
+      
       function getSeverityIcon(s, impact) {
         if(s==='critical') return `<div class="text-red-500">${getIcon('AlertTriangle', 16)}</div>`;
         if(s==='major') return `<div class="text-orange-500">${getIcon('AlertTriangle', 16)}</div>`;
