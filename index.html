@@ -1157,13 +1157,12 @@
     // --- PROGRESSIVE AUTOMATION SCORE ENGINE ---
     const AutomationAnalyzer = (() => {
       // Helper to check capability based on Profile Name
-      // [수정] hasCap 안전성 강화
       const hasCap = (dev, cap) => (CAPABILITY_MAP[getProfileName(dev)] || []).includes(cap);
       
-      const getDeviceList = (rooms) => rooms.flatMap((r, ri) => r.rows.map(row => ({ 
+      // [수정] r.rows 안전 접근 (?.) 및 caps 배열 보장
+      const getDeviceList = (rooms) => rooms.flatMap((r, ri) => (r.rows || []).map(row => ({ 
           ...row, 
           rIdx: ri, 
-          // [수정] caps가 반드시 배열이 되도록 보장
           caps: CAPABILITY_MAP[getProfileName(row.device)] || [] 
       })));
 
@@ -1176,7 +1175,8 @@
           if (d.caps.includes('hub_zigbee')) hubTypes.add('Zigbee');
           if (d.caps.includes('hub_thread')) hubTypes.add('Thread');
           if (d.caps.includes('hub_zwave')) hubTypes.add('Z-Wave');
-          // [수정] protocol이 undefined일 경우 대비 (toLowerCase 충돌 방지)
+          
+          // [수정] protocol undefined 방지
           const proto = (d.protocol || '').toLowerCase();
           if (proto.includes('wi-fi') || proto.includes('matter')) hubTypes.add('Wi-Fi');
         });
@@ -1206,12 +1206,14 @@
         }
         
         let emptyCount = 0;
-        rooms.forEach(r => { if (r.rows.length === 0) emptyCount++; });
+        // [수정] r.rows 안전 접근
+        rooms.forEach(r => { if ((r.rows || []).length === 0) emptyCount++; });
+        
         if (rooms.length > 0 && emptyCount === rooms.length) {
            reasons.push({ code: 'ALL_ROOMS_EMPTY', severity: 'critical', impact: -40, message: '모든 방이 비어있습니다. 기기를 추가하세요.', related: [] });
         } else if (emptyCount > 0) {
            rooms.forEach(r => {
-             if (r.rows.length === 0) {
+             if ((r.rows || []).length === 0) {
                reasons.push({ code: 'ROOM_EMPTY', severity: 'minor', impact: -3, message: `'${r.name}' 방이 비어있습니다.`, related: [] });
              }
            });
@@ -1223,8 +1225,9 @@
 
         const hubRooms = new Set();
         rooms.forEach((r, i) => {
-           // [수정] Optional Chaining 호환성 문제 및 undefined 방지 로직 강화
-           const hasHubInRoom = r.rows.some(d => {
+           // [수정] rows가 없는 경우 방어
+           const rows = r.rows || [];
+           const hasHubInRoom = rows.some(d => {
                const caps = CAPABILITY_MAP[getProfileName(d.device)] || [];
                return caps.some(c => c.startsWith('hub'));
            });
@@ -1236,20 +1239,23 @@
             reasons.push({ code: 'MULTI_HUB_NETWORK', severity: 'major', impact: 10, message: '멀티 허브 네트워크 구성', related: [] });
         }
 
-        // Room Analysis using hasCap
-        const roomDevs = rooms.map((r, i) => ({ 
-            idx: i, 
-            name: r.name,
-            light: r.rows.filter(d => hasCap(d.device, 'light')),
-            sensor_motion: r.rows.filter(d => hasCap(d.device, 'sensor_motion') || hasCap(d.device, 'sensor_presence') || hasCap(d.device, 'switch')),
-            airq: r.rows.filter(d => hasCap(d.device, 'sensor_air')),
-            hvac: r.rows.filter(d => hasCap(d.device, 'hvac') || hasCap(d.device, 'ventilation')),
-            cook: r.rows.filter(d => hasCap(d.device, 'cooktop')),
-            hood: r.rows.filter(d => hasCap(d.device, 'hood')),
-            sec_dev: r.rows.filter(d => hasCap(d.device, 'doorlock') || hasCap(d.device, 'camera')),
-            sec_sens: r.rows.filter(d => hasCap(d.device, 'sensor_contact') || hasCap(d.device, 'sensor_motion')),
-            energy: r.rows.filter(d => hasCap(d.device, 'energy_monitor') || hasCap(d.device, 'smart_plug'))
-        }));
+        // Room Analysis
+        const roomDevs = rooms.map((r, i) => {
+            const rows = r.rows || []; // [수정] rows 방어
+            return { 
+                idx: i, 
+                name: r.name,
+                light: rows.filter(d => hasCap(d.device, 'light')),
+                sensor_motion: rows.filter(d => hasCap(d.device, 'sensor_motion') || hasCap(d.device, 'sensor_presence') || hasCap(d.device, 'switch')),
+                airq: rows.filter(d => hasCap(d.device, 'sensor_air')),
+                hvac: rows.filter(d => hasCap(d.device, 'hvac') || hasCap(d.device, 'ventilation')),
+                cook: rows.filter(d => hasCap(d.device, 'cooktop')),
+                hood: rows.filter(d => hasCap(d.device, 'hood')),
+                sec_dev: rows.filter(d => hasCap(d.device, 'doorlock') || hasCap(d.device, 'camera')),
+                sec_sens: rows.filter(d => hasCap(d.device, 'sensor_contact') || hasCap(d.device, 'sensor_motion')),
+                energy: rows.filter(d => hasCap(d.device, 'energy_monitor') || hasCap(d.device, 'smart_plug'))
+            };
+        });
 
         let autoCount = 0;
         let coverageSet = new Set(); 
@@ -1302,7 +1308,7 @@
             reasons.push({ code: 'COVERAGE_BONUS', severity: 'major', impact: 10, message: '핵심 3개 이상 영역 커버', related: [] });
         }
 
-        // [수정] protocol undefined 방지
+        // [수정] d.protocol 체크 시 undefined 방지
         if (devices.length > 0 && devices.every(d => !(d.protocol) || d.protocol.includes('Wi-Fi')) && zigbeeDevs.length === 0 && zwaveDevs.length === 0 && threadDevs.length === 0) {
            reasons.push({ code: 'WIFI_ONLY_OK', severity: 'info', impact: 4, message: 'Wi-Fi 전용 구성', related: [] });
         }
@@ -1650,12 +1656,12 @@
         stack.classList.add('open');
         backdrop.classList.add('active');
         
-        // currentReasons가 없거나 배열이 아닌 경우 대비
+        // [수정] currentReasons가 undefined일 경우 빈 배열 처리
         const reasons = Array.isArray(currentReasons) ? currentReasons : [];
 
         const sorted = [...reasons].sort((a,b) => {
           const map = { critical: 4, major: 3, minor: 2, info: 1 };
-          return (map[b.severity] || 0) - (map[a.severity] || 0); // map lookup 안전 처리
+          return (map[b.severity] || 0) - (map[a.severity] || 0);
         });
 
         if (sorted.length === 0) {
@@ -1771,13 +1777,23 @@
       try {
         const r = localStorage.getItem(STORAGE_KEY);
         let data = r ? JSON.parse(r) : createDefaultRooms();
+        
+        // [수정] 데이터 무결성 검사 강화
+        if (!Array.isArray(data)) data = createDefaultRooms();
+        
         data.forEach(room => {
+           // rows가 없으면 빈 배열 할당 (Crash 방지)
+           if (!Array.isArray(room.rows)) room.rows = [];
+           
            room.rows.forEach(row => {
              if (row.isSlim === undefined) row.isSlim = false;
            });
         });
         return data;
-      } catch (e) { return createDefaultRooms(); }
+      } catch (e) { 
+        console.error("Data Load Error:", e);
+        return createDefaultRooms(); 
+      }
     };
     const createDefaultRooms = () => [{ name: '거실', rows: [{ __rid: Math.random().toString(36).slice(2), device: '스마트 스피커', protocol: 'Wi-Fi', qty: 1, isSlim: false }] }];
     const saveRooms = () => {
