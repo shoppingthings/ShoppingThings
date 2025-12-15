@@ -1415,64 +1415,73 @@
         </div>
       `;
     }
-
+    
     function renderAutomationWidgets() {
       const container = document.getElementById('automation-widgets-area');
       if(!container) return;
 
-      // [핵심 수정] 기기 리스트를 만들 때 getProfileName을 거쳐서 Capability를 가져옵니다.
-      const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => {
-          // 1. 사용자 입력 이름에 대한 표준 프로필 이름 찾기 (예: 무드등 -> 조명)
-          const profileName = getProfileName(row.device);
-          
-          return { 
-              ...row, 
-              rIdx: ri, 
-              // 2. 표준 이름으로 Capability 조회 (그래야 '조명' 관련 자동화가 활성화됨)
-              caps: CAPABILITY_MAP[profileName] || [],
+      try {
+        // [수정] 기기 리스트 생성 시 안전장치 강화
+        const devices = state.rooms.flatMap((r, ri) => {
+            if (!r.rows) return []; // rows가 없으면 빈 배열
+            return r.rows.map(row => {
+              if (!row.device) return null; // device 이름 없으면 무시
               
-              // 3. (옵션) 텍스트 기반 규칙(예: '커튼' 포함 여부 확인)을 위해
-              // 표준 이름도 함께 검색될 수 있도록 보조 속성 추가 가능
-              // 단, 현재 구조상 caps만 잘 매핑되어도 대부분 해결됩니다.
-              _standardName: profileName
-          };
-      }));
+              const profileName = getProfileName(row.device);
+              return { 
+                  ...row, 
+                  rIdx: ri, 
+                  // caps가 undefined가 되지 않도록 빈 배열 보장
+                  caps: CAPABILITY_MAP[profileName] || [],
+                  _standardName: profileName
+              };
+            }).filter(d => d !== null); // 유효한 기기만 남김
+        });
 
-      // 체크 로직 수행
-      const validAutomations = AUTOMATION_RULES.filter(rule => rule.check(devices) !== null);
+        // 체크 로직 수행
+        const validAutomations = AUTOMATION_RULES.filter(rule => {
+            try {
+                return rule.check(devices) !== null;
+            } catch (e) {
+                console.warn(`Rule check failed for ${rule.id}:`, e);
+                return false;
+            }
+        });
 
-      if (validAutomations.length === 0) {
-        container.innerHTML = '';
-        return;
+        if (validAutomations.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="backdrop-blur-md p-3 md:p-6">
+             <div class="flex flex-wrap gap-y-6 justify-start">
+               ${validAutomations.map(auto => {
+                 const related = auto.check(devices) || [];
+                 const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
+                 
+                 return `
+                   <div class="w-1/4 md:w-[12.5%] lg:w-[10%] flex flex-col items-center gap-2 group cursor-pointer relative" onclick="showAutoDetail('${auto.id}')" data-tooltip-target="true">
+                      <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-50 to-white dark:from-slate-800 dark:to-slate-700 shadow-md border border-slate-100 dark:border-slate-600 flex items-center justify-center text-brand group-hover:scale-110 group-hover:shadow-brand/20 group-hover:border-brand/50 transition-all">
+                         ${getIcon(auto.icon, 24)}
+                      </div>
+                      <span class="text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300 text-center leading-tight max-w-[80px] break-keep">${auto.name}</span>
+                      
+                      <div class="tooltip-box absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white text-xs rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
+                         <div class="font-bold mb-1 text-brand-light">${auto.name}</div>
+                         <div class="leading-relaxed text-slate-300">Triggered by:<br>${relatedNames}</div>
+                         <div class="tooltip-arrow absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45"></div>
+                      </div>
+                   </div>
+                 `;
+               }).join('')}
+             </div>
+          </div>
+        `;
+      } catch (err) {
+        console.error("renderAutomationWidgets Crash:", err);
+        container.innerHTML = ''; // 에러 시 빈 화면
       }
-
-      container.innerHTML = `
-        <div class="backdrop-blur-md p-3 md:p-6">
-           <div class="flex flex-wrap gap-y-6 justify-start">
-             ${validAutomations.map(auto => {
-               // 여기서도 devices 배열(위에서 caps가 수정된 버전)을 사용해 관련 기기 추출
-               const related = auto.check(devices) || [];
-               // Tooltip에는 사용자가 입력한 원래 이름(row.device)이 표시됨
-               const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
-               
-               return `
-                 <div class="w-1/4 md:w-[12.5%] lg:w-[10%] flex flex-col items-center gap-2 group cursor-pointer relative" onclick="showAutoDetail('${auto.id}')" data-tooltip-target="true">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-50 to-white dark:from-slate-800 dark:to-slate-700 shadow-md border border-slate-100 dark:border-slate-600 flex items-center justify-center text-brand group-hover:scale-110 group-hover:shadow-brand/20 group-hover:border-brand/50 transition-all">
-                       ${getIcon(auto.icon, 24)}
-                    </div>
-                    <span class="text-[10px] md:text-xs font-bold text-slate-600 dark:text-slate-300 text-center leading-tight max-w-[80px] break-keep">${auto.name}</span>
-                    
-                    <div class="tooltip-box absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 text-white text-xs rounded-xl p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
-                       <div class="font-bold mb-1 text-brand-light">${auto.name}</div>
-                       <div class="leading-relaxed text-slate-300">Triggered by:<br>${relatedNames}</div>
-                       <div class="tooltip-arrow absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45"></div>
-                    </div>
-                 </div>
-               `;
-             }).join('')}
-           </div>
-        </div>
-      `;
     }
     
     // --- SMART TOOLTIP POSITIONING ---
@@ -1525,30 +1534,36 @@
        const auto = AUTOMATION_RULES.find(a => a.id === id);
        if(!auto) return;
        
-       // [수정됨] 상세 팝업에서도 getProfileName을 적용하여, '무드등' 입력 시 '조명'의 능력을(light) 인식하도록 수정
-       const devices = state.rooms.flatMap((r, ri) => r.rows.map(row => ({ 
-           ...row, 
-           rIdx: ri, 
-           caps: CAPABILITY_MAP[getProfileName(row.device)] || [] 
-       })));
-       
-       const related = auto.check(devices) || [];
-       const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
+       try {
+           const devices = state.rooms.flatMap((r, ri) => {
+               if(!r.rows) return [];
+               return r.rows.map(row => ({ 
+                   ...row, 
+                   rIdx: ri, 
+                   caps: CAPABILITY_MAP[getProfileName(row.device)] || [] 
+               }));
+           });
+           
+           const related = auto.check(devices) || [];
+           const relatedNames = [...new Set(related.map(r => r.device))].join(', ');
 
-       const html = `
-         <div class="p-6 text-center">
-            <div class="w-20 h-20 mx-auto rounded-full bg-blue-50 dark:bg-slate-800 flex items-center justify-center text-brand mb-4 shadow-inner">
-               ${getIcon(auto.icon, 40)}
-            </div>
-            <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">${auto.name}</h3>
-            <p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">${auto.desc}</p>
-            <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left">
-               <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">필요 기기 (충족됨)</div>
-               <div class="text-sm font-medium text-slate-800 dark:text-slate-200">${relatedNames || '<span class="text-slate-400">없음</span>'}</div>
-            </div>
-         </div>
-       `;
-       openModal(html, '자동화 추천');
+           const html = `
+             <div class="p-6 text-center">
+                <div class="w-20 h-20 mx-auto rounded-full bg-blue-50 dark:bg-slate-800 flex items-center justify-center text-brand mb-4 shadow-inner">
+                   ${getIcon(auto.icon, 40)}
+                </div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white mb-2">${auto.name}</h3>
+                <p class="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">${auto.desc}</p>
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left">
+                   <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">필요 기기 (충족됨)</div>
+                   <div class="text-sm font-medium text-slate-800 dark:text-slate-200">${relatedNames || '<span class="text-slate-400">없음</span>'}</div>
+                </div>
+             </div>
+           `;
+           openModal(html, '자동화 추천');
+       } catch (e) {
+           console.error("showAutoDetail Error:", e);
+       }
     }
     
     function scrollToRoom(idx) {
