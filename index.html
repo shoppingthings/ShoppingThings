@@ -914,6 +914,18 @@
               return speakers.length > 0 ? speakers : null;
           }
       },
+      // 브리핑 자동화
+      {
+          id: 'brief',
+          name: '브리핑 자동화',
+          desc: '설정된 시간에 오늘 하루 날씨와 일정, 뉴스를 브리핑 받습니다.',
+          icon: 'Volume2',
+          check: (devs) => {
+              // speaker capability를 가진 기기를 찾습니다.
+              const speakers = devs.filter(d => d.caps.includes('speaker'));
+              return speakers.length > 0 ? speakers : null;
+          }
+      },
       //엄크 자동화 (엄마 크리티컬)
       {
           id: 'mom_emergency',
