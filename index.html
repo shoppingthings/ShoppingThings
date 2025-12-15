@@ -608,8 +608,6 @@
     // --- DATA CONSTANTS ---
     const STORAGE_KEY = 'shoppingthings:rooms:v9';
 
-    // [마이그레이션: 단일 소스화된 DEVICE_PROFILE 객체]
-    // 모든 기기 정보가 여기 하나의 객체에 통합됩니다.
     // 키: devicetype (영어_언더스코어 스타일, 아이콘 파일명과 동일)
     // 값: { devicetype, name (한국어 표시명), category (카테고리), icon (파일명), capabilities (배열), synonyms (동의어 배열) }
     // 추가/수정 시 여기만 건드리면 나머지 맵들이 자동 파생됩니다.
@@ -1173,7 +1171,7 @@
       // Helper to check capability based on Profile Name
       const hasCap = (dev, cap) => (CAPABILITY_MAP[getProfileName(dev)] || []).includes(cap);
       
-      // [수정] r.rows 안전 접근 (?.) 및 caps 배열 보장
+      // r.rows 안전 접근 (?.) 및 caps 배열 보장
       const getDeviceList = (rooms) => rooms.flatMap((r, ri) => (r.rows || []).map(row => ({ 
           ...row, 
           rIdx: ri, 
@@ -1190,12 +1188,12 @@
           if (d.caps.includes('hub_thread')) hubTypes.add('Thread');
           if (d.caps.includes('hub_zwave')) hubTypes.add('Z-Wave');
           
-          // [수정] protocol undefined 방지
+          // protocol undefined 방지
           const proto = (d.protocol || '').toLowerCase();
           if (proto.includes('wi-fi') || proto.includes('matter')) hubTypes.add('Wi-Fi');
         });
 
-        // [수정] protocol 안전 접근
+        // protocol 안전 접근
         const zigbeeDevs = devices.filter(d => (d.protocol || '').toLowerCase().includes('zigbee'));
         const zwaveDevs = devices.filter(d => (d.protocol || '').toLowerCase().includes('z-wave'));
         const threadDevs = devices.filter(d => (d.protocol || '').toLowerCase().includes('thread'));
@@ -1220,7 +1218,7 @@
         }
         
         let emptyCount = 0;
-        // [수정] r.rows 안전 접근
+        // r.rows 안전 접근
         rooms.forEach(r => { if ((r.rows || []).length === 0) emptyCount++; });
         
         if (rooms.length > 0 && emptyCount === rooms.length) {
@@ -1239,7 +1237,7 @@
 
         const hubRooms = new Set();
         rooms.forEach((r, i) => {
-           // [수정] rows가 없는 경우 방어
+           // rows가 없는 경우 방어
            const rows = r.rows || [];
            const hasHubInRoom = rows.some(d => {
                const caps = CAPABILITY_MAP[getProfileName(d.device)] || [];
@@ -1255,7 +1253,7 @@
 
         // Room Analysis
         const roomDevs = rooms.map((r, i) => {
-            const rows = r.rows || []; // [수정] rows 방어
+            const rows = r.rows || []; // rows 방어
             return { 
                 idx: i, 
                 name: r.name,
@@ -1322,7 +1320,7 @@
             reasons.push({ code: 'COVERAGE_BONUS', severity: 'major', impact: 10, message: '핵심 3개 이상 영역 커버', related: [] });
         }
 
-        // [수정] d.protocol 체크 시 undefined 방지
+        // d.protocol 체크 시 undefined 방지
         if (devices.length > 0 && devices.every(d => !(d.protocol) || d.protocol.includes('Wi-Fi')) && zigbeeDevs.length === 0 && zwaveDevs.length === 0 && threadDevs.length === 0) {
            reasons.push({ code: 'WIFI_ONLY_OK', severity: 'info', impact: 4, message: 'Wi-Fi 전용 구성', related: [] });
         }
@@ -1358,9 +1356,9 @@
       }
 
       container.innerHTML = keys.map(key => {
-        // [수정] 사용자가 입력한 이름(key)에 대해 매칭되는 프로필 이름을 찾음
+        // 사용자가 입력한 이름(key)에 대해 매칭되는 프로필 이름을 찾음
         const profileName = getProfileName(key);
-        // [수정] 매칭된 이름으로 아이콘을 찾음
+        // 매칭된 이름으로 아이콘을 찾음
         const filename = DEVICE_ICON_MAP[profileName] || 'other';
         
         const imgSrc = `images/icons/deviceprofiles/${filename}.png`;
@@ -1435,7 +1433,7 @@
       if(!container) return;
 
       try {
-        // [수정] 기기 리스트 생성 시 안전장치 강화
+        // 기기 리스트 생성 시 안전장치 강화
         const devices = state.rooms.flatMap((r, ri) => {
             if (!r.rows) return []; // rows가 없으면 빈 배열
             return r.rows.map(row => {
@@ -1765,7 +1763,7 @@
         stack.classList.add('open');
         backdrop.classList.add('active');
         
-        // [수정] currentReasons가 undefined일 경우 빈 배열 처리
+        // currentReasons가 undefined일 경우 빈 배열 처리
         const reasons = Array.isArray(currentReasons) ? currentReasons : [];
 
         const sorted = [...reasons].sort((a,b) => {
@@ -1887,7 +1885,7 @@
         const r = localStorage.getItem(STORAGE_KEY);
         let data = r ? JSON.parse(r) : createDefaultRooms();
         
-        // [수정] 데이터 무결성 검사 강화
+        // 데이터 무결성 검사 강화
         if (!Array.isArray(data)) data = createDefaultRooms();
         
         data.forEach(room => {
@@ -1913,7 +1911,7 @@
     };
     const loadTheme = () => localStorage.getItem('shoppingthings:theme') || 'light';
     const saveTheme = (t) => localStorage.setItem('shoppingthings:theme', t);
-    // Main Init (수정됨: 실행 순서 변경 및 안전장치 추가)
+    // Main Init (실행 순서 변경 및 안전장치 추가)
     function init() {
       console.log("Initializing ShoppingThings...");
       
@@ -2333,7 +2331,7 @@
           room.rows.forEach((row, rowIdx) => {
             const isSlim = row.isSlim === true;
             
-            // [수정됨] 사용자가 입력한 동의어(예: 무드등)를 표준 프로필 이름(예: 조명)으로 변환하여 아이콘을 찾습니다.
+            // 사용자가 입력한 동의어(예: 무드등)를 표준 프로필 이름(예: 조명)으로 변환하여 아이콘을 찾습니다.
             const profileName = getProfileName(row.device);
             const filename = DEVICE_ICON_MAP[profileName] || 'other';
             
@@ -2812,12 +2810,12 @@
       if(backCallback) document.getElementById('modal-back').onclick = backCallback;
     }
     
-    // [수정된 부분] 초기화 함수: 선택자를 ID(#)로 정확히 변경
+    // 초기화 함수: 선택자를 ID(#)로 정확히 변경
     function initDragForAll() {
       // 기존 코드에서 '.app-filter-tabs' -> '#app-filter-tabs' 로 변경되었습니다.
-      // 확실하게 작동하도록 주요 스크롤 영역 ID를 모두 포함했습니다.
+      // 확실하게 작동하도록 주요 스크롤 영역 ID를 모두 포함.
       const selectors = [
-        '#app-filter-tabs',       // 앱 필터 탭 (이게 빠져 있었음)
+        '#app-filter-tabs',       // 앱 필터 탭
         '#pc-tabs-container',     // PC 상단 탭
         '#mobile-tabs-container', // 모바일 상단 탭
         '#device-cat-tabs',       // 디바이스 모달 내부 탭
@@ -3074,7 +3072,7 @@
       };
       window.addEventListener('scroll', handleScroll, { passive: true });
     }
-// [수정] PNG 내보내기 함수 (Layout Shift 문제 해결 버전)
+// PNG 내보내기 함수 (Layout Shift 문제 해결 버전)
     const exportToPNG = async () => {
       if (!window.htmlToImage) return alert('html-to-image 라이브러리가 로드되지 않았습니다.');
       
@@ -3084,7 +3082,7 @@
       // 로딩 표시
       btn.innerHTML = `${getIcon('Camera', 20, 'animate-pulse')} <span class="font-bold text-xs">캡처중...</span>`;
       
-      // [핵심 1] 캡처 도중 레이아웃이 밀릴 때 애니메이션이 발생하면 좌표가 꼬입니다.
+      // 캡처 도중 레이아웃이 밀릴 때 애니메이션이 발생하면 좌표가 꼬입니다.
       // 캡처 순간에만 모든 트랜지션을 강제로 끕니다.
       const style = document.createElement('style');
       style.id = 'capture-style-override';
@@ -3132,7 +3130,7 @@
       // 헤더 삽입
       mainContent.insertBefore(captureHeader, mainContent.firstChild);
 
-      // [핵심 2] 브라우저가 변경된 레이아웃(헤더 삽입으로 인한 밀림)을 
+      // 브라우저가 변경된 레이아웃(헤더 삽입으로 인한 밀림)을 
       // 확실하게 그릴 시간을 줍니다 (100ms 딜레이).
       // 트랜지션을 껐으므로 즉시 이동하지만, 렌더링 안정성을 위해 필요합니다.
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -3150,7 +3148,7 @@
       });
 
       // 5. Input 값 텍스트 변환 (Overlay)
-      // [중요] 레이아웃이 확정된(딜레이 후) 시점에 좌표를 계산해야 정확합니다.
+      // 레이아웃이 확정된(딜레이 후) 시점에 좌표를 계산.
       const inputs = document.querySelectorAll('input');
       const overlays = [];
       inputs.forEach(el => {
@@ -3243,8 +3241,7 @@
         };
 
         // 캡처 전에 스크롤을 맨 위로 올려야 헤더가 잘리지 않을 수 있습니다.
-        // (선택 사항: 사용자 경험상 튈 수 있으나 캡처 정확도는 올라감)
-        // window.scrollTo(0, 0); 
+        // window.scrollTo(0, 0); (사용자 경험상 튈 수 있으나 캡처 정확도는 올라감)
 
         const blob = await htmlToImage.toBlob(document.body, options);
         
@@ -3272,7 +3269,7 @@
     }
     
     //PWA
-    // [신규] PWA Service Worker 등록
+    //PWA Service Worker 등록
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             // 루트 경로에서 service-worker.js를 찾습니다.
