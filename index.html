@@ -2922,6 +2922,7 @@
     function openGnbPopover(anchor) {
       const html = `
         <button id="act-reset" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-medium text-left">${getIcon('RotateCcw', 16)} 초기화</button>
+        <button id="act-special-thanks" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-medium text-left">${getIcon('Heart', 16)} 고마운 분</button>
         <button id="act-theme" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-medium text-left">${getIcon('Moon', 16)} ${state.theme === 'dark' ? '라이트 모드' : '다크 모드'}</button>`;
       openPopover(anchor, html);
       document.getElementById('act-reset').onclick = () => { if(confirm('리셋을 하면 다시 되돌릴 수 없으니 이미지로 저장 버튼을 눌러서 사진으로 저장하세요.\n\n싹 비우고 새로 시작할까요? 확인을 누르면 방 표의 모든 기기들이 날라갑니다.')) { localStorage.clear(); location.reload(); } };
@@ -2930,8 +2931,56 @@
         saveTheme(state.theme); applyTheme();
         document.getElementById('popover-root').innerHTML = '';
       };
+      document.getElementById('act-special-thanks').onclick = () => {
+          openSpecialThanksModal();
+      };
     }
 
+    function openSpecialThanksModal() {
+        // 팝오버 닫기 (openPopover가 popover-root를 사용한다고 가정)
+        const popoverRoot = document.getElementById('popover-root');
+        if (popoverRoot) popoverRoot.innerHTML = '';
+
+        const html = `
+            <div class="p-6 text-center">
+                <div class="w-20 h-20 mx-auto rounded-full bg-pink-50 dark:bg-slate-800 flex items-center justify-center text-red-500 dark:text-pink-400 mb-4 shadow-inner">
+                    ${getIcon('Heart', 40)}
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left mb-4">
+                    <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">디자인 스타일</div>
+                    <div class="text-slate-800 dark:text-slate-200">
+                        <span class="font-logo text-2xl text-indigo-600 dark:text-indigo-400">One UI 8</span>의 간결하고 세련된 디자인을 참고했습니다.
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left mb-4">
+                    <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">치유가 되는 노래</div>
+                    <p class="text-slate-800 dark:text-slate-200 text-sm leading-relaxed mb-4">
+                        개발할 때는 커피 한 짝과 **IVE**가 부른 노래 **'XOXZ'**가 없으면 안됩니다.
+                        <br>
+                        **Music Frame**의 스트레오 구성으로 들으면 극락 그 자체입니다.
+                    </p>
+                    <div class="flex justify-center mt-3">
+                        <a href="https://www.youtube.com/watch?v=F3zWvG80s04" target="_blank" class="flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md transition duration-150 text-sm">
+                            <span class="text-lg mr-2">🎶</span>꼭 들어 보세요<span class="text-lg ml-2">🎶</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left">
+                    <div class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">감사한 사람</div>
+                    <div class="text-slate-800 dark:text-slate-200 font-medium">
+                        스마트싱스 갤러리의 모든 스싱붕이들
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // openModal 함수를 호출하여 모달을 띄웁니다.
+        openModal(html, '고마운 분');
+    }
+    
     function openRoomPopover(anchor, rIdx) {
       const html = `
         <button data-a="preset" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-200 font-medium text-left">${getIcon('Box', 16)} 프리셋 추가</button>
