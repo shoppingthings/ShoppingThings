@@ -1804,40 +1804,73 @@
     };
     const loadTheme = () => localStorage.getItem('shoppingthings:theme') || 'light';
     const saveTheme = (t) => localStorage.setItem('shoppingthings:theme', t);
-
-    // Main Init
+    // Main Init (수정됨: 실행 순서 변경 및 안전장치 추가)
     function init() {
+      console.log("Initializing ShoppingThings...");
+      
+      // 1. 데이터 로드
       state.rooms = loadRooms();
       state.theme = loadTheme();
       applyTheme();
       
-      renderAll(); 
-      setupGlobalDelegation(); 
-      setupIndicatorObserver();
-      setupGnbScroll();
-      window.addEventListener('resize', handleResize);
-      handleResize();
-      bindStaticEvents();
-      ScoreUI.render(state.rooms);
-      renderMapView();
-      setupTooltipPositioning();
-
-      renderAppGrid('all');
-      setupDragScroll(document.getElementById('app-store-grid'));
-      
-      const pasWrapper = document.getElementById('pas-wrapper');
-      if (pasWrapper) {
-          pasWrapper.addEventListener('click', () => {
-             ScoreUI.toggleNotif(); 
-          });
+      // 2. 이벤트 리스너 먼저 바인딩 (렌더링 에러가 나도 버튼은 동작해야 함)
+      try {
+        setupGlobalDelegation(); 
+        setupIndicatorObserver();
+        setupGnbScroll();
+        bindStaticEvents(); // GNB, 사이드바, 탭 등 정적 이벤트
+        
+        // PAS(점수판) 클릭 이벤트 바인딩
+        const pasWrapper = document.getElementById('pas-wrapper');
+        if (pasWrapper) {
+            // 기존 리스너 제거 후 추가 (중복 방지)
+            const newPas = pasWrapper.cloneNode(true);
+            pasWrapper.parentNode.replaceChild(newPas, pasWrapper);
+            newPas.addEventListener('click', () => {
+               ScoreUI.toggleNotif(); 
+            });
+        }
+        
+        // 알림창 닫기 이벤트
+        const backdrop = document.getElementById('notif-backdrop');
+        if(backdrop) backdrop.addEventListener('click', ScoreUI.closeNotif);
+        
+        document.addEventListener('keydown', (e) => {
+           if(e.key === 'Escape') ScoreUI.closeNotif();
+        });
+        
+        window.addEventListener('resize', handleResize);
+      } catch (e) {
+        console.error("Event Binding Error:", e);
       }
-      
-      document.getElementById('notif-backdrop').addEventListener('click', ScoreUI.closeNotif);
-      document.addEventListener('keydown', (e) => {
-         if(e.key === 'Escape') ScoreUI.closeNotif();
-      });
-    }
 
+      // 3. UI 렌더링 (안전하게 실행)
+      try {
+        renderAll(); 
+      } catch (e) { console.error("renderAll Error:", e); }
+
+      try {
+        ScoreUI.render(state.rooms); // 벨 아이콘 & 점수
+      } catch (e) { console.error("ScoreUI render Error:", e); }
+
+      try {
+        renderMapView(); // 맵 뷰
+      } catch (e) { console.error("Map View render Error:", e); }
+
+      try {
+        setupTooltipPositioning();
+      } catch (e) { console.error("Tooltip setup Error:", e); }
+
+      try {
+        // 앱 그리드 렌더링
+        renderAppGrid('all');
+        setupDragScroll(document.getElementById('app-store-grid'));
+      } catch (e) { console.error("AppGrid Error:", e); }
+      
+      // 초기 사이드바 상태 반영
+      handleResize();
+    }
+    
     function setupGnbScroll() {
       let lastScrollY = window.scrollY;
       const gnb = document.getElementById('gnb');
